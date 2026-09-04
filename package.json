@@ -4,11 +4,14 @@
   "private": true,
   "packageManager": "npm",
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.123.0",
     "@vinext/cloudflare": "latest",
+    "openai": "^7.9.0",
     "react": "latest",
     "react-dom": "latest",
     "react-server-dom-webpack": "latest",
-    "vinext": "latest"
+    "vinext": "latest",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@cloudflare/vite-plugin": "latest",
