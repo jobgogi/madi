@@ -1,6 +1,6 @@
 import type { Severity } from "@/lib/analysis-schema";
 
-// AnalysisReportView와 종합 분석 페이지가 같은 severity 배지 스타일을 쓰도록 공유.
+// 리포트 페이지가 severity 배지 스타일을 쓰는 곳마다 공유.
 export const SEVERITY_STYLE: Record<Severity, string> = {
   critical: "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300",
   warning:

@@ -4,8 +4,8 @@ import type { Provider } from "@/lib/settings";
 
 // analysis-schema.ts나 이 파일의 구조가 바뀌면 예전 기록을 새 UI가 읽다가
 // 깨질 수 있으므로, 버전을 찍어두고 안 맞는 기록은 로드 시 걸러낸다.
-// v1 -> v2: direction 필드 추가.
-const SCHEMA_VERSION = 2;
+// v1 -> v2: direction 필드 추가. v2 -> v3: report.strengths 필드 추가.
+const SCHEMA_VERSION = 3;
 
 export interface SentenceResult {
   sourceText: string;

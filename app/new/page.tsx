@@ -183,12 +183,7 @@ export default function NewSessionPage() {
       const session = addSession(provider, direction, results);
       setPendingResults(null);
       setSaveError(null);
-      // 여러 문장이면 종합 분석을 우선 보여주고, 문장별 상세는 거기서 선택해 들어가게 한다.
-      router.push(
-        session.sentences.length > 1
-          ? `/history/${session.id}/summary`
-          : `/history/${session.id}`,
-      );
+      router.push(`/history/${session.id}`);
     } catch {
       // 분석 결과는 이미 메모리에 있으니 화면에서 사라지지 않는다 -
       // 저장만 다시 시도할 수 있게 남겨둔다.

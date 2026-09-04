@@ -91,6 +91,12 @@ export const TranslationAnalysisReportSchema = z
       .describe(
         "전체적인 자연스러움/완성도에 대한 짧은 총평 (점수화하지 않고 서술형으로)",
       ),
+    strengths: z
+      .array(z.string())
+      .max(3)
+      .describe(
+        "사용자 번역에서 특히 잘한 부분(자연스러운 표현, 정확한 뉘앙스 전달 등). 억지로 채우지 말고 정말 잘한 부분만. 없으면 빈 배열",
+      ),
     grammar_points: z
       .array(GrammarPointSchema)
       .describe(

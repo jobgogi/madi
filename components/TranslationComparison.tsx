@@ -1,8 +1,7 @@
 import { diffChars } from "@/lib/diff";
 
 // base(내 번역 등)와 alternative(AI 제안 등)를 문자 단위로 비교해서, 서로
-// 다른 부분만 색으로 강조한 두 줄로 보여준다. AnalysisReportView와 종합
-// 분석 페이지(문단 단위 diff)가 공유.
+// 다른 부분만 색으로 강조한 두 줄로 보여준다.
 export function TranslationComparison({
   baseLabel = "내 번역",
   base,
