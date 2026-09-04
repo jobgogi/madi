@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "마디 — 일한 번역 분석 도구",
-  description: "일본어 원문과 한국어 번역을 AI로 비교 분석하는 학습 도구",
+  title: "마디 — 일한 번역 학습 도구",
+  description: "AI가 만든 기준 번역과 내 번역을 비교하며, 한 문장씩 짚어가는 번역 학습",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

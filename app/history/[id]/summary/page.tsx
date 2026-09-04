@@ -65,7 +65,7 @@ export default function SessionSummaryPage() {
           <div>
             <Link
               href={`/history/${session.id}`}
-              className="text-sm text-zinc-500 hover:underline print:hidden dark:text-zinc-400"
+              className="text-sm text-zinc-600 hover:text-zinc-900 hover:underline print:hidden dark:text-zinc-300 dark:hover:text-white"
             >
               ← 문장별 결과로
             </Link>
@@ -164,7 +164,7 @@ export default function SessionSummaryPage() {
             </p>
             <Link
               href={`/history/${session.id}`}
-              className="mt-1 inline-block text-xs text-zinc-500 hover:underline print:hidden dark:text-zinc-400"
+              className="mt-1 inline-block text-xs text-zinc-600 hover:text-zinc-900 hover:underline print:hidden dark:text-zinc-300 dark:hover:text-white"
             >
               해당 문장 결과 보기
             </Link>

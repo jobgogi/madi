@@ -18,9 +18,8 @@
 - 배포: **vinext → Cloudflare Workers** (Cloudflare Pages 아님)
 - 인증: Supabase Auth (Google OAuth)
 - DB: Supabase (Postgres)
-- LLM 연동: BYOK 방식 (OpenAI/Claude/Ollama 어댑터)
+- LLM 연동: BYOK 방식 (Claude/OpenAI/Gemini 어댑터 — Ollama는 스코프 제외, 사용자 확인됨)
   - API 키는 localStorage 저장, 서버 미경유(요청마다 body로 전달, 서버에 영구 저장 안 함)
-  - Ollama 선택 시 Tailscale 안내 문구 + `OLLAMA_ORIGINS` 설정 안내 필요
 
 ## 배포 관련 주의사항
 - `wrangler versions upload` 전에 반드시 `npm run build`(vinext build) 단계가 선행되어야 함 (Cloudflare 프로젝트 설정의 Build command에 포함)
@@ -60,10 +59,9 @@ AI 출력의 `category` 값은 반드시 이 10개 중 하나여야 하며, 새 
 → 참고: `src/lib/severity-style.ts`, `analysis-schema.ts`의 `SEVERITIES`
 
 ### 설정 화면
-- LLM 제공자 선택 드롭다운(OpenAI/Claude/Ollama)에 따라 하단 필드 동적 전환
-- Ollama 선택 시 Tailscale + OLLAMA_ORIGINS 안내 박스 표시
+- LLM 제공자 선택 드롭다운(Claude/OpenAI/Gemini)에 따라 하단 필드 동적 전환 (Claude만 Workspace ID 필드 노출)
 - API 키는 localStorage에만 저장
-→ 참고: `src/lib/settings.ts` (참고 저장소는 gemini도 포함하지만, 최종안은 openai/claude/ollama 3종)
+→ 참고: `src/lib/settings.ts` (Ollama는 스코프 제외 확정 — 참고 저장소와 동일하게 claude/openai/gemini 3종)
 
 ### 에러 케이스별 안내 문구
 | 상황 | 문구 |
@@ -71,13 +69,11 @@ AI 출력의 `category` 값은 반드시 이 10개 중 하나여야 하며, 새 
 | 키 미입력 | API 키가 설정되지 않았습니다. 설정 화면에서 먼저 입력해주세요. |
 | 키 인증 실패 | API 키가 유효하지 않습니다. 키가 만료되었거나 잘못 입력되었을 수 있습니다. |
 | 키 사용량 초과 | API 사용량 한도에 도달했습니다. 잠시 후 다시 시도하거나 사용량을 확인해주세요. |
-| Ollama 연결 실패 | Ollama 서버에 연결할 수 없습니다. 서버가 켜져 있는지, 주소가 올바른지 확인해주세요. |
-| CORS 차단 | 브라우저 보안 정책으로 요청이 차단되었습니다. OLLAMA_ORIGINS 설정을 확인해주세요. |
 | 네트워크 실패 | 네트워크 연결에 문제가 발생했습니다. 인터넷 연결을 확인해주세요. |
 | AI 응답 파싱 오류 | AI 응답을 처리하는 중 문제가 발생했습니다. 다시 시도해주세요. (재시도 버튼) |
 | 저장 실패 | 결과 저장에 실패했습니다. 분석 결과는 화면에 유지되니, 다시 저장을 시도해주세요. |
-| 세션 만료 | 로그인이 만료되었습니다. 다시 로그인해주세요. |
-→ 참고: `src/lib/providers/errors.ts`의 `describeProviderError` (Ollama/CORS/세션 만료 케이스는 새로 추가 필요)
+| 세션 만료 | 로그인이 만료되었습니다. 다시 로그인해주세요. (3단계 인증 추가 후 적용) |
+→ 참고: `src/lib/providers/errors.ts`의 `describeProviderError` (Ollama/CORS 케이스는 스코프 제외, 세션 만료는 3단계 인증 추가 시 적용)
 
 ### 종합 분석 페이지 (여러 문장일 때만 등장)
 - 등장 시점: 결과 화면(마지막 문장) → 저장 → **종합 분석 페이지** → 대시보드

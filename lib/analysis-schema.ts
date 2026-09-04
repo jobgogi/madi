@@ -29,6 +29,15 @@ export type Severity = (typeof SEVERITIES)[number];
 export const JLPT_LEVELS = ["N5", "N4", "N3", "N2", "N1"] as const;
 export type JlptLevel = (typeof JLPT_LEVELS)[number];
 
+// 번역 방향. ja_to_ko: 일본어 원문 -> 한국어 번역 (기본). ko_to_ja: 한국어 원문 -> 일본어 번역.
+export const DIRECTIONS = ["ja_to_ko", "ko_to_ja"] as const;
+export type Direction = (typeof DIRECTIONS)[number];
+
+export const DIRECTION_LANG: Record<Direction, { source: string; target: string }> = {
+  ja_to_ko: { source: "일본어", target: "한국어" },
+  ko_to_ja: { source: "한국어", target: "일본어" },
+};
+
 // .strict() (additionalProperties: false) is required for OpenAI's
 // structured-outputs "strict" JSON Schema mode; Anthropic's zodOutputFormat
 // accepts it too, so one schema definition serves both providers.

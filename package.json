@@ -5,6 +5,7 @@
   "packageManager": "npm",
   "dependencies": {
     "@anthropic-ai/sdk": "^0.123.0",
+    "@google/genai": "^2.21.0",
     "@vinext/cloudflare": "latest",
     "openai": "^7.9.0",
     "react": "latest",

@@ -1,4 +1,4 @@
-export type Provider = "claude" | "openai";
+export type Provider = "claude" | "openai" | "gemini";
 
 export interface Settings {
   provider: Provider;
@@ -14,7 +14,7 @@ export interface Settings {
 const STORAGE_KEY = "madi:settings";
 
 function isProvider(value: unknown): value is Provider {
-  return value === "claude" || value === "openai";
+  return value === "claude" || value === "openai" || value === "gemini";
 }
 
 export function loadSettings(): Settings | null {

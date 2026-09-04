@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import OpenAI from "openai";
+import { ApiError as GeminiApiError } from "@google/genai";
 import { AnalysisParseError } from "./analyze";
 
 export interface ProviderErrorResponse {
@@ -48,6 +49,39 @@ export function describeProviderError(error: unknown): ProviderErrorResponse {
   }
   if (error instanceof Anthropic.APIError || error instanceof OpenAI.APIError) {
     if (typeof error.status === "number" && error.status >= 500) {
+      return {
+        status: 502,
+        message: "AI 서버가 일시적으로 불안정합니다. 잠시 후 다시 시도해주세요.",
+      };
+    }
+    return {
+      status: typeof error.status === "number" ? error.status : 502,
+      message: `API 오류: ${error.message}`,
+    };
+  }
+  if (error instanceof GeminiApiError) {
+    // Gemini는 잘못된 키에 401/403이 아니라 400 INVALID_ARGUMENT를 준다
+    // (실제 요청으로 확인됨) - 메시지 내용으로 구분해서 별도 처리.
+    if (
+      error.status === 401 ||
+      error.status === 403 ||
+      error.message.includes("API_KEY_INVALID") ||
+      error.message.includes("API key not valid")
+    ) {
+      return {
+        status: 401,
+        message: "API 키가 유효하지 않습니다. 키가 만료되었거나 잘못 입력되었을 수 있습니다.",
+      };
+    }
+    if (error.status === 429) {
+      return {
+        status: 429,
+        message: "API 사용량 한도에 도달했습니다. 잠시 후 다시 시도하거나 사용량을 확인해주세요.",
+      };
+    }
+    // 503 UNAVAILABLE("high demand") 등 5xx는 우리 쪽 문제가 아니라 모델이
+    // 일시적으로 과부하 상태인 경우 - 실제 요청으로 확인됨.
+    if (error.status >= 500) {
       return {
         status: 502,
         message: "AI 서버가 일시적으로 불안정합니다. 잠시 후 다시 시도해주세요.",

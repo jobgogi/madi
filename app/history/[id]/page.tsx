@@ -108,6 +108,7 @@ export default function SessionDetailPage() {
           apiKey: settings.apiKey,
           model: settings.model,
           workspaceId: settings.workspaceId,
+          direction: session.direction,
           sourceText: sentence.sourceText,
           userTranslation: editedTranslation,
         }),
@@ -165,7 +166,7 @@ export default function SessionDetailPage() {
           <div>
             <Link
               href="/"
-              className="text-sm text-zinc-500 hover:underline dark:text-zinc-400"
+              className="text-sm text-zinc-600 hover:text-zinc-900 hover:underline dark:text-zinc-300 dark:hover:text-white"
             >
               ← 대시보드로
             </Link>
@@ -179,7 +180,7 @@ export default function SessionDetailPage() {
             type="button"
             aria-label="이 기록 전체 삭제"
             onClick={handleDeleteSession}
-            className="shrink-0 text-sm text-zinc-400 hover:text-red-600 dark:text-zinc-500 dark:hover:text-red-400"
+            className="shrink-0 text-sm text-zinc-500 hover:text-red-600 dark:text-zinc-400 dark:hover:text-red-400"
           >
             기록 삭제
           </button>
@@ -275,7 +276,7 @@ export default function SessionDetailPage() {
                 type="button"
                 onClick={() => setEditing(false)}
                 disabled={reanalyzing}
-                className="text-sm text-zinc-500 hover:underline dark:text-zinc-400"
+                className="text-sm text-zinc-600 hover:text-zinc-900 hover:underline dark:text-zinc-300 dark:hover:text-white"
               >
                 취소
               </button>

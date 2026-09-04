@@ -5,6 +5,12 @@ import { JLPT_STYLE } from "@/lib/jlpt-style";
 const PROVIDER_LABEL: Record<HistorySession["provider"], string> = {
   claude: "Claude",
   openai: "ChatGPT",
+  gemini: "Gemini",
+};
+
+const DIRECTION_BADGE: Record<HistorySession["direction"], string> = {
+  ja_to_ko: "일→한",
+  ko_to_ja: "한→일",
 };
 
 function formatDate(ts: number): string {
@@ -46,6 +52,14 @@ export function SessionCard({
         >
           {level}
         </span>
+        <span
+          className="shrink-0 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900/40 dark:text-blue-300"
+          aria-label={
+            session.direction === "ja_to_ko" ? "일본어에서 한국어로" : "한국어에서 일본어로"
+          }
+        >
+          {DIRECTION_BADGE[session.direction]}
+        </span>
         <span className="min-w-0 flex-1 truncate text-zinc-800 dark:text-zinc-200">
           {truncate(sourceText, 40)}
           {sentenceCount > 1 ? ` 외 ${sentenceCount - 1}문장` : ""}
@@ -70,7 +84,7 @@ export function SessionCard({
           type="button"
           aria-label="이 기록 삭제"
           onClick={() => onDelete(session.id)}
-          className="shrink-0 text-xs text-zinc-400 hover:text-red-600 dark:text-zinc-500 dark:hover:text-red-400"
+          className="shrink-0 text-xs text-zinc-500 hover:text-red-600 dark:text-zinc-400 dark:hover:text-red-400"
         >
           삭제
         </button>

@@ -8,11 +8,13 @@ import { loadSettings, saveSettings, type Provider } from "@/lib/settings";
 const PROVIDER_LABEL: Record<Provider, string> = {
   claude: "Claude (Anthropic)",
   openai: "ChatGPT (OpenAI)",
+  gemini: "Gemini (Google) - 무료 티어 있음",
 };
 
 const MODEL_PLACEHOLDER: Record<Provider, string> = {
   claude: "claude-opus-5 (기본값)",
   openai: "gpt-5 (최신 모델명은 직접 확인 후 입력 권장)",
+  gemini: "gemini-3.5-flash-lite (기본값)",
 };
 
 const API_KEY_LINK: Record<Provider, { href: string; label: string }> = {
@@ -23,6 +25,10 @@ const API_KEY_LINK: Record<Provider, { href: string; label: string }> = {
   openai: {
     href: "https://platform.openai.com/api-keys",
     label: "platform.openai.com에서 발급",
+  },
+  gemini: {
+    href: "https://aistudio.google.com/apikey",
+    label: "aistudio.google.com에서 무료로 발급",
   },
 };
 
@@ -96,7 +102,7 @@ export default function SettingsPage() {
         <header>
           <Link
             href="/"
-            className="text-sm text-zinc-500 hover:underline dark:text-zinc-400"
+            className="text-sm text-zinc-600 hover:text-zinc-900 hover:underline dark:text-zinc-300 dark:hover:text-white"
           >
             ← 돌아가기
           </Link>
@@ -145,7 +151,7 @@ export default function SettingsPage() {
               href={API_KEY_LINK[provider].href}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-xs text-zinc-500 hover:underline dark:text-zinc-400"
+              className="text-xs text-zinc-600 hover:text-zinc-900 hover:underline dark:text-zinc-300 dark:hover:text-white"
             >
               {API_KEY_LINK[provider].label}
             </a>

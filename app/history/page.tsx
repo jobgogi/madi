@@ -52,7 +52,7 @@ export default function HistoryPage() {
           <div>
             <Link
               href="/"
-              className="text-sm text-zinc-500 hover:underline dark:text-zinc-400"
+              className="text-sm text-zinc-600 hover:text-zinc-900 hover:underline dark:text-zinc-300 dark:hover:text-white"
             >
               ← 대시보드로
             </Link>
@@ -68,7 +68,7 @@ export default function HistoryPage() {
             <button
               type="button"
               onClick={handleClearAll}
-              className="shrink-0 text-sm text-zinc-500 hover:text-red-600 dark:text-zinc-400 dark:hover:text-red-400"
+              className="shrink-0 text-sm text-zinc-600 hover:text-red-600 dark:text-zinc-300 dark:hover:text-red-400"
             >
               전체 삭제
             </button>

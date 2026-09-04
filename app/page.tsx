@@ -18,16 +18,16 @@ export default function Dashboard() {
         <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h1 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">
-              마디 — 일한 번역 분석 도구
+              마디 — 일한 번역 학습 도구
             </h1>
             <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-              일본어 원문과 본인의 한국어 번역을 비교 분석해줍니다.
+              AI가 만든 기준 번역과 내 번역을 비교하며, 한 문장씩 짚어가는 번역 학습
             </p>
           </div>
           <div className="flex shrink-0 items-center gap-3">
             <Link
               href="/settings"
-              className="text-sm text-zinc-500 hover:underline dark:text-zinc-400"
+              className="text-sm text-zinc-600 hover:text-zinc-900 hover:underline dark:text-zinc-300 dark:hover:text-white"
             >
               설정
             </Link>
@@ -58,7 +58,7 @@ export default function Dashboard() {
               {(sessions ?? []).length > RECENT_LIMIT && (
                 <Link
                   href="/history"
-                  className="self-end text-sm text-zinc-500 hover:underline dark:text-zinc-400"
+                  className="self-end text-sm text-zinc-600 hover:text-zinc-900 hover:underline dark:text-zinc-300 dark:hover:text-white"
                 >
                   전체 기록 보기 ({(sessions ?? []).length}건)
                 </Link>

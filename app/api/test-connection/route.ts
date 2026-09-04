@@ -5,7 +5,7 @@ import { describeProviderError } from "@/lib/providers/errors";
 import { getClientIp, isRateLimited } from "@/lib/rate-limit";
 
 const RequestSchema = z.object({
-  provider: z.enum(["claude", "openai"]),
+  provider: z.enum(["claude", "openai", "gemini"]),
   apiKey: z.string().min(1, "API 키가 설정되지 않았습니다. 설정 화면에서 먼저 입력해주세요."),
   model: z.string().optional(),
   workspaceId: z.string().optional(),

@@ -1,10 +1,11 @@
 import { useEffect, useState, type Dispatch, type SetStateAction } from "react";
-import type { TranslationAnalysisReport } from "@/lib/analysis-schema";
+import type { Direction, TranslationAnalysisReport } from "@/lib/analysis-schema";
 import type { Provider } from "@/lib/settings";
 
 // analysis-schema.ts나 이 파일의 구조가 바뀌면 예전 기록을 새 UI가 읽다가
 // 깨질 수 있으므로, 버전을 찍어두고 안 맞는 기록은 로드 시 걸러낸다.
-const SCHEMA_VERSION = 1;
+// v1 -> v2: direction 필드 추가.
+const SCHEMA_VERSION = 2;
 
 export interface SentenceResult {
   sourceText: string;
@@ -18,6 +19,7 @@ export interface HistorySession {
   createdAt: number;
   schemaVersion: number;
   provider: Provider;
+  direction: Direction;
   sentences: SentenceResult[];
 }
 
@@ -60,6 +62,7 @@ function saveAll(sessions: HistorySession[]): void {
 
 export function addSession(
   provider: Provider,
+  direction: Direction,
   sentences: SentenceResult[],
 ): HistorySession {
   const session: HistorySession = {
@@ -67,6 +70,7 @@ export function addSession(
     createdAt: Date.now(),
     schemaVersion: SCHEMA_VERSION,
     provider,
+    direction,
     sentences,
   };
   if (typeof window !== "undefined") {

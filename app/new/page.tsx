@@ -3,10 +3,30 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import type { TranslationAnalysisReport } from "@/lib/analysis-schema";
+import {
+  DIRECTION_LANG,
+  DIRECTIONS,
+  type Direction,
+  type TranslationAnalysisReport,
+} from "@/lib/analysis-schema";
 import { loadSettings, type Settings } from "@/lib/settings";
 import { addSession, getAverageDurationMs, type SentenceResult } from "@/lib/history";
 import { pairSentences } from "@/lib/sentence-split";
+
+const DIRECTION_TOGGLE_LABEL: Record<Direction, string> = {
+  ja_to_ko: "일본어 → 한국어",
+  ko_to_ja: "한국어 → 일본어",
+};
+
+const SOURCE_PLACEHOLDER: Record<Direction, string> = {
+  ja_to_ko: "彼はその話を聞いて、少し驚いたようだった。",
+  ko_to_ja: "그는 그 이야기를 듣고 조금 놀란 것 같았다.",
+};
+
+const TRANSLATION_PLACEHOLDER: Record<Direction, string> = {
+  ja_to_ko: "그는 그 이야기를 듣고 조금 놀란 것 같았다.",
+  ko_to_ja: "彼はその話を聞いて、少し驚いたようだった。",
+};
 
 class AnalyzeRequestError extends Error {
   kind: "network" | "api";
@@ -19,6 +39,7 @@ class AnalyzeRequestError extends Error {
 
 async function analyzeOne(
   settings: Settings,
+  direction: Direction,
   sourceText: string,
   userTranslation: string,
 ): Promise<SentenceResult> {
@@ -32,6 +53,7 @@ async function analyzeOne(
         apiKey: settings.apiKey,
         model: settings.model,
         workspaceId: settings.workspaceId,
+        direction,
         sourceText,
         userTranslation,
       }),
@@ -64,6 +86,7 @@ export default function NewSessionPage() {
   const [settings, setSettings] = useState<Settings | null | undefined>(
     undefined,
   );
+  const [direction, setDirection] = useState<Direction>("ja_to_ko");
   const [sourceText, setSourceText] = useState("");
   const [userTranslation, setUserTranslation] = useState("");
   const [loading, setLoading] = useState(false);
@@ -113,7 +136,7 @@ export default function NewSessionPage() {
     const results: SentenceResult[] = [];
     try {
       for (const pair of pairs) {
-        const result = await analyzeOne(settings, pair.source, pair.translation);
+        const result = await analyzeOne(settings, direction, pair.source, pair.translation);
         results.push(result);
         setProgress({ done: results.length, total: pairs.length });
       }
@@ -135,7 +158,7 @@ export default function NewSessionPage() {
 
   function trySave(provider: Settings["provider"], results: SentenceResult[]) {
     try {
-      const session = addSession(provider, results);
+      const session = addSession(provider, direction, results);
       setPendingResults(null);
       setSaveError(null);
       router.push(`/history/${session.id}`);
@@ -160,7 +183,7 @@ export default function NewSessionPage() {
         <header>
           <Link
             href="/"
-            className="text-sm text-zinc-500 hover:underline dark:text-zinc-400"
+            className="text-sm text-zinc-600 hover:text-zinc-900 hover:underline dark:text-zinc-300 dark:hover:text-white"
           >
             ← 대시보드로
           </Link>
@@ -174,10 +197,29 @@ export default function NewSessionPage() {
           </p>
         </header>
 
+        <div className="flex gap-2" role="group" aria-label="번역 방향 선택">
+          {DIRECTIONS.map((d) => (
+            <button
+              key={d}
+              type="button"
+              onClick={() => setDirection(d)}
+              disabled={loading}
+              aria-pressed={direction === d}
+              className={`rounded-full border px-4 py-1.5 text-sm font-medium transition-colors disabled:opacity-50 ${
+                direction === d
+                  ? "border-zinc-900 bg-zinc-900 text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-900"
+                  : "border-zinc-300 text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+              }`}
+            >
+              {DIRECTION_TOGGLE_LABEL[d]}
+            </button>
+          ))}
+        </div>
+
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <label className="flex flex-col gap-1.5">
             <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-              일본어 원문
+              {DIRECTION_LANG[direction].source} 원문
             </span>
             <textarea
               value={sourceText}
@@ -185,9 +227,9 @@ export default function NewSessionPage() {
               required
               disabled={loading}
               rows={4}
-              aria-label="일본어 원문 입력"
+              aria-label={`${DIRECTION_LANG[direction].source} 원문 입력`}
               className="rounded-lg border border-zinc-300 bg-white p-3 text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-400 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
-              placeholder="彼はその話を聞いて、少し驚いたようだった。"
+              placeholder={SOURCE_PLACEHOLDER[direction]}
             />
             <span className="self-end text-xs text-zinc-400 dark:text-zinc-500">
               {sourceText.length}자
@@ -196,7 +238,7 @@ export default function NewSessionPage() {
 
           <label className="flex flex-col gap-1.5">
             <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-              내 한국어 번역
+              내 {DIRECTION_LANG[direction].target} 번역
             </span>
             <textarea
               value={userTranslation}
@@ -204,9 +246,9 @@ export default function NewSessionPage() {
               required
               disabled={loading}
               rows={4}
-              aria-label="한국어 번역 입력"
+              aria-label={`${DIRECTION_LANG[direction].target} 번역 입력`}
               className="rounded-lg border border-zinc-300 bg-white p-3 text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-400 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
-              placeholder="그는 그 이야기를 듣고 조금 놀란 것 같았다."
+              placeholder={TRANSLATION_PLACEHOLDER[direction]}
             />
             <span className="self-end text-xs text-zinc-400 dark:text-zinc-500">
               {userTranslation.length}자
