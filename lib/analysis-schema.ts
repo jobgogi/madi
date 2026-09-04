@@ -17,8 +17,6 @@ export const POINT_CATEGORIES = [
   "뉘앙스_오류",
 ] as const;
 
-export type PointCategory = (typeof POINT_CATEGORIES)[number];
-
 // critical: 원문과 반대/다른 의미로 읽히는 경우 (의미 왜곡)
 // warning: 문법 오류 또는 어조·시제 일관성 붕괴
 // info: 문법은 맞지만 더 자연스러운 표현이 있는 경우
