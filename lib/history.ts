@@ -80,21 +80,6 @@ export function addSession(
   return session;
 }
 
-// "번역 수정 후 재분석" - 세션 내 한 문장의 결과만 교체한다.
-export function updateSessionSentence(
-  sessionId: string,
-  index: number,
-  sentence: SentenceResult,
-): HistorySession | null {
-  if (typeof window === "undefined") return null;
-  const sessions = loadSessions();
-  const session = sessions.find((s) => s.id === sessionId);
-  if (!session || !session.sentences[index]) return null;
-  session.sentences[index] = sentence;
-  saveAll(sessions);
-  return session;
-}
-
 export function deleteSession(id: string): void {
   if (typeof window === "undefined") return;
   saveAll(loadSessions().filter((s) => s.id !== id));
@@ -131,6 +116,31 @@ export function getAverageDurationMs(provider: Provider): number | null {
     .filter((d): d is number => typeof d === "number");
   if (durations.length === 0) return null;
   return durations.reduce((sum, d) => sum + d, 0) / durations.length;
+}
+
+export interface PastSourceEntry {
+  sourceText: string;
+  direction: Direction;
+}
+
+// "이전 원문 불러오기" 팝업에 띄울 목록 - 과거에 연습했던 원문들을 최신 세션
+// 순으로, 방향 구분 없이 전부 모은다 (골라진 항목의 방향으로 자동 전환되므로
+// 여기서는 방향으로 거르지 않는다). 각 항목은 실제로 분석됐던 단위
+// (session.sentences[].sourceText) 그대로 보여준다 - 정규식으로 다시 문장을
+// 쪼개려 하면 "...", 인용부호 등에서 엉뚱하게 잘려 원문이 훼손된다. 같은
+// 문장은 한 번만 보여준다.
+export function pastSourceEntries(): PastSourceEntry[] {
+  const seen = new Set<string>();
+  const entries: PastSourceEntry[] = [];
+  for (const session of loadSessions()) {
+    for (const sentence of session.sentences) {
+      const key = `${session.direction}:${sentence.sourceText}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      entries.push({ sourceText: sentence.sourceText, direction: session.direction });
+    }
+  }
+  return entries;
 }
 
 // 대시보드/전체 기록 페이지가 공유하는 "마운트 후 localStorage에서 세션 목록을

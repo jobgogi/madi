@@ -10,7 +10,13 @@ import {
   type TranslationAnalysisReport,
 } from "@/lib/analysis-schema";
 import { loadSettings, type Settings } from "@/lib/settings";
-import { addSession, getAverageDurationMs, type SentenceResult } from "@/lib/history";
+import {
+  addSession,
+  getAverageDurationMs,
+  pastSourceEntries,
+  type PastSourceEntry,
+  type SentenceResult,
+} from "@/lib/history";
 import { pairSentences } from "@/lib/sentence-split";
 
 const DIRECTION_TOGGLE_LABEL: Record<Direction, string> = {
@@ -100,6 +106,22 @@ export default function NewSessionPage() {
     null,
   );
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [pastEntries, setPastEntries] = useState<PastSourceEntry[] | null>(null);
+  // 팝업에서 원문을 불러온 직후에는 그 원문의 언어와 방향 버튼이 어긋나지
+  // 않도록 방향 버튼을 잠근다. 원문을 직접 고치면 다시 풀린다.
+  const [directionLocked, setDirectionLocked] = useState(false);
+
+  function openPastSourcePicker() {
+    setPastEntries(pastSourceEntries());
+  }
+
+  function pickPastSource(entry: PastSourceEntry) {
+    setDirection(entry.direction);
+    setSourceText(entry.sourceText);
+    setUserTranslation("");
+    setDirectionLocked(true);
+    setPastEntries(null);
+  }
 
   useEffect(() => {
     // One-time read of a client-only source (localStorage) on mount, to avoid
@@ -161,7 +183,12 @@ export default function NewSessionPage() {
       const session = addSession(provider, direction, results);
       setPendingResults(null);
       setSaveError(null);
-      router.push(`/history/${session.id}`);
+      // 여러 문장이면 종합 분석을 우선 보여주고, 문장별 상세는 거기서 선택해 들어가게 한다.
+      router.push(
+        session.sentences.length > 1
+          ? `/history/${session.id}/summary`
+          : `/history/${session.id}`,
+      );
     } catch {
       // 분석 결과는 이미 메모리에 있으니 화면에서 사라지지 않는다 -
       // 저장만 다시 시도할 수 있게 남겨둔다.
@@ -179,7 +206,7 @@ export default function NewSessionPage() {
 
   return (
     <div className="flex flex-1 justify-center bg-zinc-50 px-4 py-10 dark:bg-zinc-950">
-      <main className="flex w-full max-w-2xl flex-col gap-8">
+      <main className="flex w-full max-w-4xl flex-col gap-8">
         <header>
           <Link
             href="/"
@@ -203,7 +230,7 @@ export default function NewSessionPage() {
               key={d}
               type="button"
               onClick={() => setDirection(d)}
-              disabled={loading}
+              disabled={loading || directionLocked}
               aria-pressed={direction === d}
               className={`rounded-full border px-4 py-1.5 text-sm font-medium transition-colors disabled:opacity-50 ${
                 direction === d
@@ -214,46 +241,66 @@ export default function NewSessionPage() {
               {DIRECTION_TOGGLE_LABEL[d]}
             </button>
           ))}
+          {directionLocked && (
+            <span className="self-center text-xs text-zinc-500 dark:text-zinc-400">
+              불러온 원문의 언어에 맞춰 고정됨 (원문을 직접 수정하면 풀립니다)
+            </span>
+          )}
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <label className="flex flex-col gap-1.5">
-            <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-              {DIRECTION_LANG[direction].source} 원문
-            </span>
-            <textarea
-              value={sourceText}
-              onChange={(e) => setSourceText(e.target.value)}
-              required
-              disabled={loading}
-              rows={4}
-              aria-label={`${DIRECTION_LANG[direction].source} 원문 입력`}
-              className="rounded-lg border border-zinc-300 bg-white p-3 text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-400 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
-              placeholder={SOURCE_PLACEHOLDER[direction]}
-            />
-            <span className="self-end text-xs text-zinc-400 dark:text-zinc-500">
-              {sourceText.length}자
-            </span>
-          </label>
+          <div className="flex flex-row gap-4">
+            <label className="flex flex-1 flex-col gap-1.5">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                  {DIRECTION_LANG[direction].source} 원문
+                </span>
+                <button
+                  type="button"
+                  onClick={openPastSourcePicker}
+                  disabled={loading}
+                  className="shrink-0 text-xs text-zinc-600 hover:text-zinc-900 hover:underline disabled:opacity-50 dark:text-zinc-300 dark:hover:text-white"
+                >
+                  이전 원문 불러오기
+                </button>
+              </div>
+              <textarea
+                value={sourceText}
+                onChange={(e) => {
+                  setSourceText(e.target.value);
+                  setDirectionLocked(false);
+                }}
+                required
+                disabled={loading}
+                rows={8}
+                aria-label={`${DIRECTION_LANG[direction].source} 원문 입력`}
+                className="rounded-lg border border-zinc-300 bg-white p-3 text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-400 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+                placeholder={SOURCE_PLACEHOLDER[direction]}
+              />
+              <span className="self-end text-xs text-zinc-400 dark:text-zinc-500">
+                {sourceText.length}자
+              </span>
+            </label>
 
-          <label className="flex flex-col gap-1.5">
-            <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-              내 {DIRECTION_LANG[direction].target} 번역
-            </span>
-            <textarea
-              value={userTranslation}
-              onChange={(e) => setUserTranslation(e.target.value)}
-              required
-              disabled={loading}
-              rows={4}
-              aria-label={`${DIRECTION_LANG[direction].target} 번역 입력`}
-              className="rounded-lg border border-zinc-300 bg-white p-3 text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-400 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
-              placeholder={TRANSLATION_PLACEHOLDER[direction]}
-            />
-            <span className="self-end text-xs text-zinc-400 dark:text-zinc-500">
-              {userTranslation.length}자
-            </span>
-          </label>
+            <label className="flex flex-1 flex-col gap-1.5">
+              <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                내 {DIRECTION_LANG[direction].target} 번역
+              </span>
+              <textarea
+                value={userTranslation}
+                onChange={(e) => setUserTranslation(e.target.value)}
+                required
+                disabled={loading}
+                rows={8}
+                aria-label={`${DIRECTION_LANG[direction].target} 번역 입력`}
+                className="rounded-lg border border-zinc-300 bg-white p-3 text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-400 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+                placeholder={TRANSLATION_PLACEHOLDER[direction]}
+              />
+              <span className="self-end text-xs text-zinc-400 dark:text-zinc-500">
+                {userTranslation.length}자
+              </span>
+            </label>
+          </div>
 
           <button
             type="submit"
@@ -309,6 +356,59 @@ export default function NewSessionPage() {
           </div>
         )}
       </main>
+
+      {pastEntries && (
+        <div
+          className="fixed inset-0 z-10 flex items-center justify-center bg-black/40 p-4"
+          onClick={() => setPastEntries(null)}
+        >
+          <div
+            role="dialog"
+            aria-label="이전 원문 선택"
+            onClick={(e) => e.stopPropagation()}
+            className="flex max-h-[80vh] w-full max-w-lg flex-col gap-3 rounded-xl bg-white p-4 dark:bg-zinc-900"
+          >
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                이전 원문 불러오기
+              </h2>
+              <button
+                type="button"
+                onClick={() => setPastEntries(null)}
+                aria-label="닫기"
+                className="text-sm text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white"
+              >
+                ✕
+              </button>
+            </div>
+
+            {pastEntries.length === 0 ? (
+              <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                연습한 기록이 아직 없습니다.
+              </p>
+            ) : (
+              <ul className="flex flex-col gap-2 overflow-y-auto">
+                {pastEntries.map((entry, i) => (
+                  <li key={i}>
+                    <button
+                      type="button"
+                      onClick={() => pickPastSource(entry)}
+                      className="flex w-full items-start gap-2 rounded-lg border border-zinc-200 p-3 text-left text-sm hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
+                    >
+                      <span className="shrink-0 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900/40 dark:text-blue-300">
+                        {DIRECTION_TOGGLE_LABEL[entry.direction]}
+                      </span>
+                      <span className="text-zinc-800 dark:text-zinc-200">
+                        {entry.sourceText}
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -44,7 +44,11 @@ export function SessionCard({
       {/* 삭제 버튼과 형제 관계로 두어, 인터랙티브 요소가 겹치지 않게 함
           (<button>을 <a> 안에 중첩하면 접근성/DOM 상 문제가 생김). */}
       <Link
-        href={`/history/${session.id}`}
+        href={
+          sentenceCount > 1
+            ? `/history/${session.id}/summary`
+            : `/history/${session.id}`
+        }
         className="flex min-w-0 flex-1 items-center gap-2 hover:underline"
       >
         <span
