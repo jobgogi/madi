@@ -200,19 +200,19 @@ export default function NewSessionPage() {
   }
 
   return (
-    <div className="flex flex-1 justify-center bg-zinc-50 px-4 py-10 dark:bg-zinc-950">
+    <div className="flex flex-1 justify-center bg-zinc-50 px-4 py-10">
       <main className="flex w-full max-w-4xl flex-col gap-8">
         <header>
           <Link
             href="/"
-            className="text-sm text-zinc-600 hover:text-zinc-900 hover:underline dark:text-zinc-300 dark:hover:text-white"
+            className="text-sm text-zinc-600 hover:text-zinc-900 hover:underline"
           >
             ← 대시보드로
           </Link>
-          <h1 className="mt-2 text-xl font-semibold text-zinc-900 dark:text-zinc-100">
+          <h1 className="mt-2 text-xl font-semibold text-zinc-900">
             새 학습
           </h1>
-          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+          <p className="mt-1 text-sm text-zinc-500">
             여러 문장을 한 번에 입력해도 문장 단위로 자동 분석됩니다. 원문과
             번역의 문장 수가 같아야 문장별로 짝지어집니다.
             {sentenceCount > 1 && ` 긴 글은 문장 수만큼(${sentenceCount}회) API 요청이 발생합니다.`}
@@ -229,15 +229,15 @@ export default function NewSessionPage() {
               aria-pressed={direction === d}
               className={`rounded-full border px-4 py-1.5 text-sm font-medium transition-colors disabled:opacity-50 ${
                 direction === d
-                  ? "border-zinc-900 bg-zinc-900 text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-900"
-                  : "border-zinc-300 text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+                  ? "border-zinc-900 bg-zinc-900 text-white"
+                  : "border-zinc-300 text-zinc-700 hover:bg-zinc-100"
               }`}
             >
               {DIRECTION_TOGGLE_LABEL[d]}
             </button>
           ))}
           {directionLocked && (
-            <span className="self-center text-xs text-zinc-500 dark:text-zinc-400">
+            <span className="self-center text-xs text-zinc-500">
               불러온 원문의 언어에 맞춰 고정됨 (원문을 직접 수정하면 풀립니다)
             </span>
           )}
@@ -247,14 +247,14 @@ export default function NewSessionPage() {
           <div className="flex flex-row gap-4">
             <label className="flex flex-1 flex-col gap-1.5">
               <div className="flex items-center justify-between gap-2">
-                <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                <span className="text-sm font-medium text-zinc-700">
                   {DIRECTION_LANG[direction].source} 원문
                 </span>
                 <button
                   type="button"
                   onClick={openPastSourcePicker}
                   disabled={loading}
-                  className="shrink-0 text-xs text-zinc-600 hover:text-zinc-900 hover:underline disabled:opacity-50 dark:text-zinc-300 dark:hover:text-white"
+                  className="shrink-0 text-xs text-zinc-600 hover:text-zinc-900 hover:underline disabled:opacity-50"
                 >
                   이전 원문 불러오기
                 </button>
@@ -269,16 +269,16 @@ export default function NewSessionPage() {
                 disabled={loading}
                 rows={8}
                 aria-label={`${DIRECTION_LANG[direction].source} 원문 입력`}
-                className="rounded-lg border border-zinc-300 bg-white p-3 text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-400 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+                className="rounded-lg border border-zinc-300 bg-white p-3 text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-400 disabled:opacity-50"
                 placeholder={SOURCE_PLACEHOLDER[direction]}
               />
-              <span className="self-end text-xs text-zinc-400 dark:text-zinc-500">
+              <span className="self-end text-xs text-zinc-400">
                 {sourceText.length}자
               </span>
             </label>
 
             <label className="flex flex-1 flex-col gap-1.5">
-              <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              <span className="text-sm font-medium text-zinc-700">
                 내 {DIRECTION_LANG[direction].target} 번역
               </span>
               <textarea
@@ -288,10 +288,10 @@ export default function NewSessionPage() {
                 disabled={loading}
                 rows={8}
                 aria-label={`${DIRECTION_LANG[direction].target} 번역 입력`}
-                className="rounded-lg border border-zinc-300 bg-white p-3 text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-400 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+                className="rounded-lg border border-zinc-300 bg-white p-3 text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-400 disabled:opacity-50"
                 placeholder={TRANSLATION_PLACEHOLDER[direction]}
               />
-              <span className="self-end text-xs text-zinc-400 dark:text-zinc-500">
+              <span className="self-end text-xs text-zinc-400">
                 {userTranslation.length}자
               </span>
             </label>
@@ -301,7 +301,7 @@ export default function NewSessionPage() {
             type="submit"
             disabled={loading}
             aria-label="분석 시작"
-            className="self-start rounded-full bg-zinc-900 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-700 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
+            className="self-start rounded-full bg-zinc-900 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-700 disabled:opacity-50"
           >
             분석 시작
           </button>
@@ -310,13 +310,13 @@ export default function NewSessionPage() {
             <div
               role="status"
               aria-live="polite"
-              className="rounded-lg bg-zinc-100 p-3 text-sm text-zinc-600 dark:bg-zinc-900 dark:text-zinc-400"
+              className="rounded-lg bg-zinc-100 p-3 text-sm text-zinc-600"
             >
               {progress && progress.total > 1
                 ? `${progress.done}/${progress.total} 문장 분석 중...`
                 : "분석 중..."}
               {estimatedMs !== null && (
-                <span className="ml-1 text-zinc-400 dark:text-zinc-500">
+                <span className="ml-1 text-zinc-400">
                   (예상 약 {Math.round(estimatedMs / 1000)}초
                   {progress && progress.total > 1 ? " / 문장" : ""})
                 </span>
@@ -328,7 +328,7 @@ export default function NewSessionPage() {
         {error && (
           <div
             role="alert"
-            className="rounded-lg bg-red-50 p-3 text-sm text-red-700 dark:bg-red-900/30 dark:text-red-300"
+            className="rounded-lg bg-red-50 p-3 text-sm text-red-700"
           >
             {error.kind === "network" && "🔌 "}
             {error.message}
@@ -338,13 +338,13 @@ export default function NewSessionPage() {
         {saveError && pendingResults && (
           <div
             role="alert"
-            className="flex flex-col gap-2 rounded-lg bg-amber-50 p-3 text-sm text-amber-800 dark:bg-amber-900/30 dark:text-amber-300"
+            className="flex flex-col gap-2 rounded-lg bg-amber-50 p-3 text-sm text-amber-800"
           >
             <p>{saveError}</p>
             <button
               type="button"
               onClick={() => trySave(settings.provider, pendingResults)}
-              className="self-start rounded-full border border-amber-400 px-4 py-1.5 text-xs font-medium hover:bg-amber-100 dark:border-amber-700 dark:hover:bg-amber-900/50"
+              className="self-start rounded-full border border-amber-400 px-4 py-1.5 text-xs font-medium hover:bg-amber-100"
             >
               다시 저장 시도
             </button>
@@ -361,24 +361,24 @@ export default function NewSessionPage() {
             role="dialog"
             aria-label="이전 원문 선택"
             onClick={(e) => e.stopPropagation()}
-            className="flex max-h-[80vh] w-full max-w-lg flex-col gap-3 rounded-xl bg-white p-4 dark:bg-zinc-900"
+            className="flex max-h-[80vh] w-full max-w-lg flex-col gap-3 rounded-xl bg-white p-4"
           >
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+              <h2 className="text-sm font-semibold text-zinc-900">
                 이전 원문 불러오기
               </h2>
               <button
                 type="button"
                 onClick={() => setPastEntries(null)}
                 aria-label="닫기"
-                className="text-sm text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white"
+                className="text-sm text-zinc-500 hover:text-zinc-900"
               >
                 ✕
               </button>
             </div>
 
             {pastEntries.length === 0 ? (
-              <p className="text-sm text-zinc-500 dark:text-zinc-400">
+              <p className="text-sm text-zinc-500">
                 연습한 기록이 아직 없습니다.
               </p>
             ) : (
@@ -388,12 +388,12 @@ export default function NewSessionPage() {
                     <button
                       type="button"
                       onClick={() => pickPastSource(entry)}
-                      className="flex w-full items-start gap-2 rounded-lg border border-zinc-200 p-3 text-left text-sm hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
+                      className="flex w-full items-start gap-2 rounded-lg border border-zinc-200 p-3 text-left text-sm hover:bg-zinc-100"
                     >
-                      <span className="shrink-0 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900/40 dark:text-blue-300">
+                      <span className="shrink-0 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800">
                         {DIRECTION_TOGGLE_LABEL[entry.direction]}
                       </span>
-                      <span className="text-zinc-800 dark:text-zinc-200">
+                      <span className="text-zinc-800">
                         {entry.sourceText}
                       </span>
                     </button>

@@ -18,7 +18,7 @@ export function TranslationComparison({
   return (
     <div className="flex flex-col gap-1.5">
       <p className="text-sm leading-relaxed">
-        <span className="mr-1.5 shrink-0 text-xs font-medium text-zinc-400 dark:text-zinc-500">
+        <span className="mr-1.5 shrink-0 text-xs font-medium text-zinc-400">
           {baseLabel}
         </span>
         {ops
@@ -27,19 +27,19 @@ export function TranslationComparison({
             op.type === "remove" ? (
               <span
                 key={i}
-                className="rounded bg-red-100 text-red-700 line-through dark:bg-red-900/40 dark:text-red-300"
+                className="rounded bg-red-100 text-red-700 line-through"
               >
                 {op.text}
               </span>
             ) : (
-              <span key={i} className="text-zinc-800 dark:text-zinc-200">
+              <span key={i} className="text-zinc-800">
                 {op.text}
               </span>
             ),
           )}
       </p>
       <p className="text-sm leading-relaxed">
-        <span className="mr-1.5 shrink-0 text-xs font-medium text-zinc-400 dark:text-zinc-500">
+        <span className="mr-1.5 shrink-0 text-xs font-medium text-zinc-400">
           {altLabel}
         </span>
         {ops
@@ -48,12 +48,12 @@ export function TranslationComparison({
             op.type === "add" ? (
               <span
                 key={i}
-                className="rounded bg-emerald-100 font-medium text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300"
+                className="rounded bg-emerald-100 font-medium text-emerald-800"
               >
                 {op.text}
               </span>
             ) : (
-              <span key={i} className="text-zinc-800 dark:text-zinc-200">
+              <span key={i} className="text-zinc-800">
                 {op.text}
               </span>
             ),

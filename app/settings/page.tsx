@@ -97,19 +97,19 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="flex flex-1 justify-center bg-zinc-50 px-4 py-10 dark:bg-zinc-950">
+    <div className="flex flex-1 justify-center bg-zinc-50 px-4 py-10">
       <main className="flex w-full max-w-lg flex-col gap-8">
         <header>
           <Link
             href="/"
-            className="text-sm text-zinc-600 hover:text-zinc-900 hover:underline dark:text-zinc-300 dark:hover:text-white"
+            className="text-sm text-zinc-600 hover:text-zinc-900 hover:underline"
           >
             ← 돌아가기
           </Link>
-          <h1 className="mt-2 text-xl font-semibold text-zinc-900 dark:text-zinc-100">
+          <h1 className="mt-2 text-xl font-semibold text-zinc-900">
             설정
           </h1>
-          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+          <p className="mt-1 text-sm text-zinc-500">
             사용할 AI와 API 키를 선택하세요. 키는 이 브라우저의 localStorage에만
             저장되며, 분석 요청 시 서버로 전달되어 API 호출에만 사용됩니다.
           </p>
@@ -117,14 +117,14 @@ export default function SettingsPage() {
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-5">
           <label className="flex flex-col gap-1.5">
-            <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+            <span className="text-sm font-medium text-zinc-700">
               AI 제공자
             </span>
             <select
               value={provider}
               onChange={(e) => setProvider(e.target.value as Provider)}
               aria-label="AI 제공자 선택"
-              className="rounded-lg border border-zinc-300 bg-white p-3 text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-400 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+              className="rounded-lg border border-zinc-300 bg-white p-3 text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-400"
             >
               {(Object.keys(PROVIDER_LABEL) as Provider[]).map((p) => (
                 <option key={p} value={p}>
@@ -135,7 +135,7 @@ export default function SettingsPage() {
           </label>
 
           <label className="flex flex-col gap-1.5">
-            <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+            <span className="text-sm font-medium text-zinc-700">
               API 키
             </span>
             <input
@@ -144,14 +144,14 @@ export default function SettingsPage() {
               onChange={(e) => setApiKey(e.target.value)}
               required
               autoComplete="off"
-              className="rounded-lg border border-zinc-300 bg-white p-3 text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-400 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+              className="rounded-lg border border-zinc-300 bg-white p-3 text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-400"
               placeholder="sk-..."
             />
             <a
               href={API_KEY_LINK[provider].href}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-xs text-zinc-600 hover:text-zinc-900 hover:underline dark:text-zinc-300 dark:hover:text-white"
+              className="text-xs text-zinc-600 hover:text-zinc-900 hover:underline"
             >
               {API_KEY_LINK[provider].label}
             </a>
@@ -159,17 +159,17 @@ export default function SettingsPage() {
 
           {provider === "claude" && (
             <label className="flex flex-col gap-1.5">
-              <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              <span className="text-sm font-medium text-zinc-700">
                 Workspace ID (선택)
               </span>
               <input
                 type="text"
                 value={workspaceId}
                 onChange={(e) => setWorkspaceId(e.target.value)}
-                className="rounded-lg border border-zinc-300 bg-white p-3 text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-400 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+                className="rounded-lg border border-zinc-300 bg-white p-3 text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-400"
                 placeholder="wrkspc_..."
               />
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              <p className="text-xs text-zinc-500">
                 &quot;anthropic-workspace-id is required&quot; 오류가 뜬다면, 여러
                 workspace에 걸친 개인 키를 쓰고 있다는 뜻입니다.{" "}
                 <a
@@ -186,14 +186,14 @@ export default function SettingsPage() {
           )}
 
           <label className="flex flex-col gap-1.5">
-            <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+            <span className="text-sm font-medium text-zinc-700">
               모델 (선택)
             </span>
             <input
               type="text"
               value={model}
               onChange={(e) => setModel(e.target.value)}
-              className="rounded-lg border border-zinc-300 bg-white p-3 text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-400 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+              className="rounded-lg border border-zinc-300 bg-white p-3 text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-400"
               placeholder={MODEL_PLACEHOLDER[provider]}
             />
           </label>
@@ -202,7 +202,7 @@ export default function SettingsPage() {
             <div className="flex items-center gap-3">
               <button
                 type="submit"
-                className="rounded-full bg-zinc-900 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-700 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
+                className="rounded-full bg-zinc-900 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-700"
               >
                 저장
               </button>
@@ -210,18 +210,18 @@ export default function SettingsPage() {
                 type="button"
                 onClick={handleTestConnection}
                 disabled={!apiKey.trim() || testState.status === "testing"}
-                className="rounded-full border border-zinc-300 px-5 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+                className="rounded-full border border-zinc-300 px-5 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 disabled:opacity-50"
               >
                 {testState.status === "testing" ? "테스트 중..." : "연결 테스트"}
               </button>
             </div>
             {testState.status === "success" && (
-              <p className="text-sm text-emerald-600 dark:text-emerald-400">
+              <p className="text-sm text-emerald-600">
                 연결 성공! 저장을 눌러 반영하세요.
               </p>
             )}
             {testState.status === "error" && (
-              <p className="text-sm text-red-600 dark:text-red-400">
+              <p className="text-sm text-red-600">
                 {testState.message}
               </p>
             )}
