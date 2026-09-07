@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { loadSettings, saveSettings, type Provider } from "@/lib/settings";
+import { loadSettings, saveSettings, useTestConnection, type Provider } from "@/lib/settings";
 
 const PROVIDER_LABEL: Record<Provider, string> = {
   claude: "Claude (Anthropic)",
@@ -32,19 +32,13 @@ const API_KEY_LINK: Record<Provider, { href: string; label: string }> = {
   },
 };
 
-type TestState =
-  | { status: "idle" }
-  | { status: "testing" }
-  | { status: "success" }
-  | { status: "error"; message: string };
-
 export default function SettingsPage() {
   const router = useRouter();
   const [provider, setProvider] = useState<Provider>("claude");
   const [apiKey, setApiKey] = useState("");
   const [model, setModel] = useState("");
   const [workspaceId, setWorkspaceId] = useState("");
-  const [testState, setTestState] = useState<TestState>({ status: "idle" });
+  const { state: testState, test: testConnection } = useTestConnection();
 
   useEffect(() => {
     // One-time prefill from a client-only source (localStorage) on mount.
@@ -69,31 +63,13 @@ export default function SettingsPage() {
     router.push("/");
   }
 
-  async function handleTestConnection() {
-    setTestState({ status: "testing" });
-    try {
-      const res = await fetch("/api/test-connection", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          provider,
-          apiKey: apiKey.trim(),
-          model: model.trim() || undefined,
-          workspaceId:
-            provider === "claude" ? workspaceId.trim() || undefined : undefined,
-        }),
-      });
-      const data = (await res.json()) as { error?: string };
-      if (!res.ok) {
-        throw new Error(data.error ?? "연결 테스트에 실패했습니다.");
-      }
-      setTestState({ status: "success" });
-    } catch (err) {
-      setTestState({
-        status: "error",
-        message: err instanceof Error ? err.message : "알 수 없는 오류입니다.",
-      });
-    }
+  function handleTestConnection() {
+    void testConnection({
+      provider,
+      apiKey: apiKey.trim(),
+      model: model.trim() || undefined,
+      workspaceId: provider === "claude" ? workspaceId.trim() || undefined : undefined,
+    });
   }
 
   return (

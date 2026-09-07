@@ -1,5 +1,6 @@
+import { useEffect, useState } from "react";
 import type { Severity } from "@/lib/analysis-schema";
-import type { HistorySession } from "@/lib/history";
+import { getSession, loadSessions, type HistorySession } from "@/lib/history";
 
 // 리포트 화면의 모든 집계는 이미 저장된 문장별 결과를 클라이언트에서
 // 합산하는 것뿐 - 추가 LLM 호출은 없다.
@@ -54,6 +55,29 @@ export interface SessionComparison {
   criticalDelta: number; // 음수 = critical 건수 감소(개선)
   warningDelta: number;
   resolvedCategories: string[]; // 직전 세션엔 있었지만 이번엔 안 나온 카테고리
+}
+
+// 리포트 화면(app/history/[id])이 마운트 후 localStorage에서 세션과 비교
+// 대상(직전 세션)을 한 번 읽어오는 로직 - fetch/storage 접근이라 컴포넌트
+// 밖으로 분리.
+export function useHistorySession(id: string): {
+  session: HistorySession | null | undefined;
+  previous: HistorySession | null;
+} {
+  const [session, setSession] = useState<HistorySession | null | undefined>(undefined);
+  const [previous, setPrevious] = useState<HistorySession | null>(null);
+
+  useEffect(() => {
+    const loaded = getSession(id);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setSession(loaded);
+    if (loaded) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setPrevious(findPreviousSession(loadSessions(), loaded));
+    }
+  }, [id]);
+
+  return { session, previous };
 }
 
 export function compareSessions(

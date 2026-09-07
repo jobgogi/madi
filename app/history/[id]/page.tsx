@@ -1,16 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import type { GrammarPoint, VocabularyItem } from "@/lib/analysis-schema";
-import { deleteSession, getSession, loadSessions, type HistorySession } from "@/lib/history";
+import { deleteSession, type HistorySession } from "@/lib/history";
 import { JLPT_STYLE } from "@/lib/jlpt-style";
 import { SEVERITY_LABEL, SEVERITY_ORDER, SEVERITY_STYLE } from "@/lib/severity-style";
 import {
   aggregateSeverityCounts,
   compareSessions,
-  findPreviousSession,
+  useHistorySession,
 } from "@/lib/session-summary";
 import { TranslationComparison } from "@/components/TranslationComparison";
 
@@ -110,21 +109,7 @@ export default function SessionReportPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
 
-  const [session, setSession] = useState<HistorySession | null | undefined>(
-    undefined,
-  );
-  const [previous, setPrevious] = useState<HistorySession | null>(null);
-
-  useEffect(() => {
-    // 클라이언트 전용 localStorage를 마운트 후 한 번만 읽는다 (SSR/hydration 안전).
-    const loaded = getSession(params.id);
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setSession(loaded);
-    if (loaded) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setPrevious(findPreviousSession(loadSessions(), loaded));
-    }
-  }, [params.id]);
+  const { session, previous } = useHistorySession(params.id);
 
   if (session === undefined) return null;
 

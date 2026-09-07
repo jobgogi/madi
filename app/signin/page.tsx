@@ -1,28 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { useGoogleSignin } from "@/lib/auth";
 
 export default function SigninPage() {
-  const supabase = createClient();
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-
-  async function handleLogin() {
-    setLoading(true);
-    setError(null);
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      },
-    });
-
-    if (error) {
-      setError(error.message);
-      setLoading(false);
-    }
-  }
+  const { signIn, loading, error } = useGoogleSignin();
 
   return (
     <div className="flex flex-1 items-center justify-center bg-zinc-50 px-4 py-10">
@@ -36,7 +17,7 @@ export default function SigninPage() {
 
         <button
           type="button"
-          onClick={handleLogin}
+          onClick={signIn}
           disabled={loading}
           aria-label="Google 계정으로 로그인"
           className="flex w-full items-center justify-center gap-2 rounded-full border border-zinc-300 px-5 py-2.5 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 disabled:opacity-50"
