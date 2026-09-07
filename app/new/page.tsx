@@ -2,9 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { DIRECTIONS, type Direction } from "@/lib/analysis-schema";
-import { splitIntoSentences } from "@/lib/sentence-split";
 import { SourceEditor } from "@/components/SourceEditor";
-import { useFlow } from "./flow-context";
+import { buildParagraphGroups, useFlow } from "./flow-context";
 
 const DIRECTION_LABEL: Record<Direction, string> = {
   ja_to_ko: "일본어 → 한국어",
@@ -17,12 +16,7 @@ export default function NewSourcePage() {
 
   function handleNext() {
     if (paragraphs.length === 0) return;
-    setGroups(
-      paragraphs.map((paragraph) => ({
-        paragraph,
-        sentences: splitIntoSentences(paragraph).map((source) => ({ source, translation: "" })),
-      })),
-    );
+    setGroups(buildParagraphGroups(paragraphs));
     router.push("/new/translate");
   }
 

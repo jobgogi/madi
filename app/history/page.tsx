@@ -1,40 +1,20 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
-import { JLPT_LEVELS, POINT_CATEGORIES, type JlptLevel } from "@/lib/analysis-schema";
-import {
-  clearHistory,
-  deleteSession,
-  sessionHeadline,
-  useSessions,
-  type HistorySession,
-} from "@/lib/history";
+import { JLPT_LEVELS, type JlptLevel } from "@/lib/analysis-schema";
+import { clearHistory, deleteSession, sessionHeadline, type HistorySession } from "@/lib/history";
 import { JLPT_STYLE } from "@/lib/jlpt-style";
-import { CATEGORY_LABEL, type PointCategory } from "@/lib/dashboard-stats";
+import { CATEGORY_LABEL, filterSessionsByCategory } from "@/lib/dashboard-stats";
+import { useSessions } from "@/lib/hooks/useSessions";
+import { useCategoryFilterFromQuery } from "@/lib/hooks/useCategoryFilterFromQuery";
 import { SessionCard } from "@/components/SessionCard";
-
-function isPointCategory(value: string | null): value is PointCategory {
-  return value !== null && (POINT_CATEGORIES as readonly string[]).includes(value);
-}
 
 export default function HistoryPage() {
   const [sessions, setSessions] = useSessions();
-  // 대시보드의 카테고리 카드에서 넘어온 ?category= 쿼리 - 마운트 후
-  // 클라이언트에서만 읽는다 (SSR/hydration 안전, /new 페이지와 같은 패턴).
-  const [categoryFilter, setCategoryFilter] = useState<PointCategory | null>(null);
-  useEffect(() => {
-    const param = new URLSearchParams(window.location.search).get("category");
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setCategoryFilter(isPointCategory(param) ? param : null);
-  }, []);
+  const categoryFilter = useCategoryFilterFromQuery();
 
   const visibleSessions = categoryFilter
-    ? (sessions ?? []).filter((s) =>
-        s.sentences.some((sentence) =>
-          sentence.report.grammar_points.some((p) => p.category === categoryFilter),
-        ),
-      )
+    ? filterSessionsByCategory(sessions ?? [], categoryFilter)
     : sessions;
 
   function handleDelete(id: string) {

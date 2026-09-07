@@ -6,11 +6,8 @@ import type { GrammarPoint, VocabularyItem } from "@/lib/analysis-schema";
 import { deleteSession, type HistorySession } from "@/lib/history";
 import { JLPT_STYLE } from "@/lib/jlpt-style";
 import { SEVERITY_LABEL, SEVERITY_ORDER, SEVERITY_STYLE } from "@/lib/severity-style";
-import {
-  aggregateSeverityCounts,
-  compareSessions,
-  useHistorySession,
-} from "@/lib/session-summary";
+import { aggregateSeverityCounts, compareSessions } from "@/lib/session-summary";
+import { useHistorySession } from "@/lib/hooks/useHistorySession";
 import { TranslationComparison } from "@/components/TranslationComparison";
 
 const PROVIDER_LABEL: Record<HistorySession["provider"], string> = {

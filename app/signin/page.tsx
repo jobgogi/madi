@@ -1,6 +1,6 @@
 "use client";
 
-import { useGoogleSignin } from "@/lib/auth";
+import { useGoogleSignin } from "@/lib/hooks/useGoogleSignin";
 
 export default function SigninPage() {
   const { signIn, loading, error } = useGoogleSignin();

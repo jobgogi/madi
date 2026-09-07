@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { loadSettings, saveSettings, useTestConnection, type Provider } from "@/lib/settings";
+import type { Provider } from "@/lib/settings";
+import { useSettingsForm } from "@/lib/hooks/useSettingsForm";
+import { useTestConnection } from "@/lib/hooks/useTestConnection";
 
 const PROVIDER_LABEL: Record<Provider, string> = {
   claude: "Claude (Anthropic)",
@@ -34,32 +35,13 @@ const API_KEY_LINK: Record<Provider, { href: string; label: string }> = {
 
 export default function SettingsPage() {
   const router = useRouter();
-  const [provider, setProvider] = useState<Provider>("claude");
-  const [apiKey, setApiKey] = useState("");
-  const [model, setModel] = useState("");
-  const [workspaceId, setWorkspaceId] = useState("");
+  const { provider, setProvider, apiKey, setApiKey, model, setModel, workspaceId, setWorkspaceId, save } =
+    useSettingsForm();
   const { state: testState, test: testConnection } = useTestConnection();
-
-  useEffect(() => {
-    // One-time prefill from a client-only source (localStorage) on mount.
-    const existing = loadSettings();
-    if (existing) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setProvider(existing.provider);
-      setApiKey(existing.apiKey);
-      setModel(existing.model ?? "");
-      setWorkspaceId(existing.workspaceId ?? "");
-    }
-  }, []);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    saveSettings({
-      provider,
-      apiKey: apiKey.trim(),
-      model: model.trim() || undefined,
-      workspaceId: provider === "claude" ? workspaceId.trim() || undefined : undefined,
-    });
+    save();
     router.push("/");
   }
 

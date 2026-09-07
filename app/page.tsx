@@ -2,13 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { DIRECTIONS } from "@/lib/analysis-schema";
-import { useSessions } from "@/lib/history";
-import { buildActivityGrid, categoryCounts, CATEGORY_LABEL, type ActivityDay } from "@/lib/dashboard-stats";
+import { CATEGORY_LABEL, type ActivityDay } from "@/lib/dashboard-stats";
+import { DIRECTION_FILTER_OPTIONS, useDashboardData, type DirectionFilter } from "@/lib/hooks/useDashboardData";
 import { SessionCard } from "@/components/SessionCard";
-
-const RECENT_LIMIT = 5;
-const ACTIVITY_WEEKS = 14;
 
 const LEVEL_COLOR: Record<ActivityDay["level"], string> = {
   0: "bg-zinc-100",
@@ -18,9 +14,6 @@ const LEVEL_COLOR: Record<ActivityDay["level"], string> = {
   4: "bg-teal-700",
 };
 
-const DIRECTION_FILTER_OPTIONS = ["all", ...DIRECTIONS] as const;
-type DirectionFilter = (typeof DIRECTION_FILTER_OPTIONS)[number];
-
 const DIRECTION_FILTER_LABEL: Record<DirectionFilter, string> = {
   all: "전체",
   ja_to_ko: "日→韓",
@@ -28,10 +21,10 @@ const DIRECTION_FILTER_LABEL: Record<DirectionFilter, string> = {
 };
 
 export default function Dashboard() {
-  const [sessions] = useSessions();
   const [direction, setDirection] = useState<DirectionFilter>("all");
+  const data = useDashboardData(direction);
 
-  if (sessions === null) {
+  if (!data) {
     return (
       <div className="flex flex-1 items-center justify-center bg-zinc-50 px-4 py-10">
         <div role="status" aria-live="polite" className="text-sm text-zinc-500">
@@ -41,11 +34,7 @@ export default function Dashboard() {
     );
   }
 
-  const filtered =
-    direction === "all" ? sessions : sessions.filter((s) => s.direction === direction);
-  const activityGrid = buildActivityGrid(filtered, ACTIVITY_WEEKS);
-  const categories = categoryCounts(filtered);
-  const recent = [...filtered].sort((a, b) => b.createdAt - a.createdAt).slice(0, RECENT_LIMIT);
+  const { activityGrid, categories, recent } = data;
 
   return (
     <div className="flex flex-1 justify-center bg-zinc-50 px-4 py-10">

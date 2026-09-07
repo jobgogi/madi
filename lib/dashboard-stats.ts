@@ -92,3 +92,13 @@ export function categoryCounts(
     .filter((c) => c.count > 0)
     .sort((a, b) => b.count - a.count);
 }
+
+// 특정 카테고리의 오류가 하나라도 있는 세션만 남긴다.
+export function filterSessionsByCategory(
+  sessions: HistorySession[],
+  category: PointCategory,
+): HistorySession[] {
+  return sessions.filter((s) =>
+    s.sentences.some((sentence) => sentence.report.grammar_points.some((p) => p.category === category)),
+  );
+}
