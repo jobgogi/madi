@@ -1,0 +1,55 @@
+"use client";
+
+import { usePathname } from "next/navigation";
+import { FlowProvider } from "./flow-context";
+
+const STEPS = [
+  { href: "/new", label: "원문 입력" },
+  { href: "/new/translate", label: "번역 입력" },
+  { href: "/new/report", label: "리포트" },
+];
+
+function StepProgress() {
+  const pathname = usePathname();
+  const currentIndex = STEPS.findIndex((step) => step.href === pathname);
+
+  return (
+    <ol className="flex flex-wrap items-center gap-2 text-sm" aria-label="새 학습 진행 단계">
+      {STEPS.map((step, i) => (
+        <li key={step.href} className="flex items-center gap-2">
+          <span
+            aria-current={i === currentIndex ? "step" : undefined}
+            className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium ${
+              i === currentIndex
+                ? "bg-zinc-900 text-white"
+                : i < currentIndex
+                  ? "bg-zinc-300 text-zinc-700"
+                  : "bg-zinc-100 text-zinc-400"
+            }`}
+          >
+            {i + 1}
+          </span>
+          <span className={i === currentIndex ? "font-medium text-zinc-900" : "text-zinc-500"}>{step.label}</span>
+          {i < STEPS.length - 1 && (
+            <span aria-hidden className="text-zinc-300">
+              →
+            </span>
+          )}
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+export default function NewFlowLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <FlowProvider>
+      <div className="flex flex-1 justify-center bg-zinc-50 px-4 py-10">
+        <main className="flex w-full max-w-3xl flex-col gap-6">
+          <StepProgress />
+          {children}
+        </main>
+      </div>
+    </FlowProvider>
+  );
+}
