@@ -40,7 +40,7 @@ export function SessionCard({
     headline ?? sessionHeadline(session);
 
   return (
-    <li className="flex items-center gap-2 rounded-lg border border-zinc-200 p-3 text-sm dark:border-zinc-800">
+    <li className="flex items-center gap-2 rounded-lg border border-zinc-200 p-3 text-sm">
       {/* 삭제 버튼과 형제 관계로 두어, 인터랙티브 요소가 겹치지 않게 함
           (<button>을 <a> 안에 중첩하면 접근성/DOM 상 문제가 생김). */}
       <Link
@@ -53,29 +53,29 @@ export function SessionCard({
           {level}
         </span>
         <span
-          className="shrink-0 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900/40 dark:text-blue-300"
+          className="shrink-0 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800"
           aria-label={
             session.direction === "ja_to_ko" ? "일본어에서 한국어로" : "한국어에서 일본어로"
           }
         >
           {DIRECTION_BADGE[session.direction]}
         </span>
-        <span className="min-w-0 flex-1 truncate text-zinc-800 dark:text-zinc-200">
+        <span className="min-w-0 flex-1 truncate text-zinc-800">
           {truncate(sourceText, 40)}
           {sentenceCount > 1 ? ` 외 ${sentenceCount - 1}문장` : ""}
         </span>
         {criticalCount > 0 && (
           <span
-            className="shrink-0 rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800 dark:bg-red-900/40 dark:text-red-300"
+            className="shrink-0 rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800"
             aria-label={`심각 오류 ${criticalCount}건`}
           >
             심각 {criticalCount}
           </span>
         )}
-        <span className="hidden shrink-0 rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-600 sm:inline dark:bg-zinc-800 dark:text-zinc-400">
+        <span className="hidden shrink-0 rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-600 sm:inline">
           {PROVIDER_LABEL[session.provider]}
         </span>
-        <span className="hidden shrink-0 text-xs text-zinc-400 sm:inline dark:text-zinc-500">
+        <span className="hidden shrink-0 text-xs text-zinc-400 sm:inline">
           {formatDate(session.createdAt)}
         </span>
       </Link>
@@ -84,7 +84,7 @@ export function SessionCard({
           type="button"
           aria-label="이 기록 삭제"
           onClick={() => onDelete(session.id)}
-          className="shrink-0 text-xs text-zinc-500 hover:text-red-600 dark:text-zinc-400 dark:hover:text-red-400"
+          className="shrink-0 text-xs text-zinc-500 hover:text-red-600"
         >
           삭제
         </button>
