@@ -1,19 +1,21 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import { useLocale } from "@/lib/hooks/useLocale";
+import { newFlow } from "@/lib/i18n/new";
 import { FlowProvider } from "./flow-context";
-
-const STEPS = [
-  { href: "/new", label: "원문 입력" },
-  { href: "/new/translate", label: "번역 입력" },
-];
 
 function StepProgress() {
   const pathname = usePathname();
+  const t = newFlow[useLocale()];
+  const STEPS = [
+    { href: "/new", label: t.stepSource },
+    { href: "/new/translate", label: t.stepTranslate },
+  ];
   const currentIndex = STEPS.findIndex((step) => step.href === pathname);
 
   return (
-    <ol className="flex flex-wrap items-center gap-2 text-sm" aria-label="새 학습 진행 단계">
+    <ol className="flex flex-wrap items-center gap-2 text-sm" aria-label={t.stepAria}>
       {STEPS.map((step, i) => (
         <li key={step.href} className="flex items-center gap-2">
           <span

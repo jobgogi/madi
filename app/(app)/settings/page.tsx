@@ -8,6 +8,8 @@ import { useSettingsForm } from "@/lib/hooks/useSettingsForm";
 import { useTestConnection } from "@/lib/hooks/useTestConnection";
 import { useNativeLanguage } from "@/lib/hooks/useNativeLanguage";
 import { useSignOut } from "@/lib/hooks/useSignOut";
+import { useLocale } from "@/lib/hooks/useLocale";
+import { settingsText } from "@/lib/i18n/settings";
 
 const NATIVE_LANGUAGE_OPTIONS: { value: NativeLanguage; label: string }[] = [
   { value: "ko", label: "한국어" },
@@ -48,6 +50,8 @@ export default function SettingsPage() {
   const { state: testState, test: testConnection } = useTestConnection();
   const { language, setLanguage } = useNativeLanguage();
   const { signOut, loading: signingOut } = useSignOut();
+  const locale = useLocale();
+  const t = settingsText[locale];
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -72,17 +76,17 @@ export default function SettingsPage() {
             href="/dashboard"
             className="text-sm text-zinc-600 hover:text-zinc-900 hover:underline"
           >
-            ← 돌아가기
+            {t.back}
           </Link>
           <h1 className="mt-2 text-xl font-semibold text-zinc-900">
-            설정
+            {t.title}
           </h1>
         </header>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-5">
           <div className="flex flex-col gap-1.5">
-            <span className="text-sm font-medium text-zinc-700">학습 언어</span>
-            <div className="flex gap-2" role="group" aria-label="학습 언어 선택">
+            <span className="text-sm font-medium text-zinc-700">{t.languageLabel}</span>
+            <div className="flex gap-2" role="group" aria-label={t.languageGroupAriaLabel}>
               {NATIVE_LANGUAGE_OPTIONS.map((opt) => (
                 <button
                   key={opt.value}
@@ -99,27 +103,24 @@ export default function SettingsPage() {
                 </button>
               ))}
             </div>
-            <p className="text-xs text-zinc-500">선택한 언어에 따라 기본 번역 방향이 결정됩니다.</p>
+            <p className="text-xs text-zinc-500">{t.languageHint}</p>
           </div>
 
           <hr className="border-zinc-200" />
 
           <div className="flex flex-col gap-1.5">
-            <span className="text-sm font-medium text-zinc-700">AI 모델</span>
-            <p className="text-sm text-zinc-500">
-              사용할 AI와 API 키를 선택하세요. 키는 이 브라우저의 localStorage에만
-              저장되며, 분석 요청 시 서버로 전달되어 API 호출에만 사용됩니다.
-            </p>
+            <span className="text-sm font-medium text-zinc-700">{t.aiModelTitle}</span>
+            <p className="text-sm text-zinc-500">{t.apiKeyIntro}</p>
           </div>
 
           <label className="flex flex-col gap-1.5">
             <span className="text-sm font-medium text-zinc-700">
-              AI 제공자
+              {t.providerLabel}
             </span>
             <select
               value={provider}
               onChange={(e) => setProvider(e.target.value as Provider)}
-              aria-label="AI 제공자 선택"
+              aria-label={t.providerAriaLabel}
               className="rounded-lg border border-zinc-300 bg-white p-3 text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-400"
             >
               {(Object.keys(PROVIDER_LABEL) as Provider[]).map((p) => (
@@ -132,7 +133,7 @@ export default function SettingsPage() {
 
           <label className="flex flex-col gap-1.5">
             <span className="text-sm font-medium text-zinc-700">
-              API 키
+              {t.apiKeyLabel}
             </span>
             <input
               type="password"
@@ -141,7 +142,7 @@ export default function SettingsPage() {
               required
               autoComplete="off"
               className="rounded-lg border border-zinc-300 bg-white p-3 text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-400"
-              placeholder="sk-..."
+              placeholder={t.apiKeyPlaceholder}
             />
             <a
               href={API_KEY_LINK[provider].href}
@@ -156,18 +157,17 @@ export default function SettingsPage() {
           {provider === "claude" && (
             <label className="flex flex-col gap-1.5">
               <span className="text-sm font-medium text-zinc-700">
-                Workspace ID (선택)
+                {t.workspaceIdLabel}
               </span>
               <input
                 type="text"
                 value={workspaceId}
                 onChange={(e) => setWorkspaceId(e.target.value)}
                 className="rounded-lg border border-zinc-300 bg-white p-3 text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-400"
-                placeholder="wrkspc_..."
+                placeholder={t.workspaceIdPlaceholder}
               />
               <p className="text-xs text-zinc-500">
-                &quot;anthropic-workspace-id is required&quot; 오류가 뜬다면, 여러
-                workspace에 걸친 개인 키를 쓰고 있다는 뜻입니다.{" "}
+                {t.workspaceIdHintBefore}{" "}
                 <a
                   href="https://platform.claude.com/settings/workspaces"
                   target="_blank"
@@ -176,14 +176,14 @@ export default function SettingsPage() {
                 >
                   platform.claude.com/settings/workspaces
                 </a>
-                에서 workspace ID를 확인해 여기에 입력하세요.
+                {t.workspaceIdHintAfter}
               </p>
             </label>
           )}
 
           <label className="flex flex-col gap-1.5">
             <span className="text-sm font-medium text-zinc-700">
-              모델 (선택)
+              {t.modelLabel}
             </span>
             <input
               type="text"
@@ -200,7 +200,7 @@ export default function SettingsPage() {
                 type="submit"
                 className="rounded-full bg-zinc-900 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-700"
               >
-                저장
+                {t.save}
               </button>
               <button
                 type="button"
@@ -208,12 +208,12 @@ export default function SettingsPage() {
                 disabled={!apiKey.trim() || testState.status === "testing"}
                 className="rounded-full border border-zinc-300 px-5 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 disabled:opacity-50"
               >
-                {testState.status === "testing" ? "테스트 중..." : "연결 테스트"}
+                {testState.status === "testing" ? t.testing : t.testConnection}
               </button>
             </div>
             {testState.status === "success" && (
               <p className="text-sm text-emerald-600">
-                연결 성공! 저장을 눌러 반영하세요.
+                {t.testSuccess}
               </p>
             )}
             {testState.status === "error" && (
@@ -233,7 +233,7 @@ export default function SettingsPage() {
             disabled={signingOut}
             className="w-full rounded-full border border-red-600 px-5 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50"
           >
-            {signingOut ? "로그아웃 중..." : "로그아웃"}
+            {signingOut ? t.signingOut : t.signOut}
           </button>
         </div>
       </main>

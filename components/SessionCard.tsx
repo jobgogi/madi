@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { sessionHeadline, type HistorySession } from "@/lib/history";
 import { JLPT_STYLE } from "@/lib/jlpt-style";
+import { useLocale } from "@/lib/hooks/useLocale";
+import { history } from "@/lib/i18n/history";
+import type { NativeLanguage } from "@/lib/native-language";
 
 const PROVIDER_LABEL: Record<HistorySession["provider"], string> = {
   claude: "Claude",
@@ -8,13 +11,8 @@ const PROVIDER_LABEL: Record<HistorySession["provider"], string> = {
   gemini: "Gemini",
 };
 
-const DIRECTION_BADGE: Record<HistorySession["direction"], string> = {
-  ja_to_ko: "일→한",
-  ko_to_ja: "한→일",
-};
-
-function formatDate(ts: number): string {
-  return new Date(ts).toLocaleString("ko-KR", {
+function formatDate(ts: number, locale: NativeLanguage): string {
+  return new Date(ts).toLocaleString(locale === "ja" ? "ja-JP" : "ko-KR", {
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
@@ -38,6 +36,8 @@ export function SessionCard({
 }) {
   const { sourceText, level, criticalCount, sentenceCount } =
     headline ?? sessionHeadline(session);
+  const locale = useLocale();
+  const t = history[locale];
 
   return (
     <li className="flex items-center gap-2 rounded-lg border border-zinc-200 p-3 text-sm">
@@ -54,39 +54,37 @@ export function SessionCard({
         </span>
         <span
           className="shrink-0 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800"
-          aria-label={
-            session.direction === "ja_to_ko" ? "일본어에서 한국어로" : "한국어에서 일본어로"
-          }
+          aria-label={t.directionAria[session.direction]}
         >
-          {DIRECTION_BADGE[session.direction]}
+          {t.directionBadge[session.direction]}
         </span>
         <span className="min-w-0 flex-1 truncate text-zinc-800">
           {truncate(sourceText, 40)}
-          {sentenceCount > 1 ? ` 외 ${sentenceCount - 1}문장` : ""}
+          {sentenceCount > 1 ? t.moreSentences(sentenceCount - 1) : ""}
         </span>
         {criticalCount > 0 && (
           <span
             className="shrink-0 rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800"
-            aria-label={`심각 오류 ${criticalCount}건`}
+            aria-label={t.criticalAria(criticalCount)}
           >
-            심각 {criticalCount}
+            {t.criticalBadge(criticalCount)}
           </span>
         )}
         <span className="hidden shrink-0 rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-600 sm:inline">
           {PROVIDER_LABEL[session.provider]}
         </span>
         <span className="hidden shrink-0 text-xs text-zinc-400 sm:inline">
-          {formatDate(session.createdAt)}
+          {formatDate(session.createdAt, locale)}
         </span>
       </Link>
       {onDelete && (
         <button
           type="button"
-          aria-label="이 기록 삭제"
+          aria-label={t.deleteShortAria}
           onClick={() => onDelete(session.id)}
           className="shrink-0 text-xs text-zinc-500 hover:text-red-600"
         >
-          삭제
+          {t.deleteShort}
         </button>
       )}
     </li>

@@ -1,4 +1,5 @@
 import type { Severity } from "@/lib/analysis-schema";
+import type { NativeLanguage } from "@/lib/native-language";
 
 // 리포트 페이지가 severity 배지 스타일을 쓰는 곳마다 공유.
 export const SEVERITY_STYLE: Record<Severity, string> = {
@@ -8,10 +9,17 @@ export const SEVERITY_STYLE: Record<Severity, string> = {
   info: "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300",
 };
 
-export const SEVERITY_LABEL: Record<Severity, string> = {
-  critical: "심각 (의미 왜곡)",
-  warning: "경고",
-  info: "참고",
+export const SEVERITY_LABEL: Record<NativeLanguage, Record<Severity, string>> = {
+  ko: {
+    critical: "심각 (의미 왜곡)",
+    warning: "경고",
+    info: "참고",
+  },
+  ja: {
+    critical: "重大（意味の歪曲）",
+    warning: "警告",
+    info: "参考",
+  },
 };
 
 // 심각도 우선순위 - critical이 항상 먼저 오도록 정렬/집계에 사용.
