@@ -4,6 +4,7 @@ import type { NativeLanguage } from "@/lib/native-language";
 export const newFlow: Record<
   NativeLanguage,
   {
+    backToDashboard: string;
     stepAria: string;
     stepSource: string;
     stepTranslate: string;
@@ -33,6 +34,7 @@ export const newFlow: Record<
   }
 > = {
   ko: {
+    backToDashboard: "← 대시보드로",
     stepAria: "새 학습 진행 단계",
     stepSource: "원문 입력",
     stepTranslate: "번역 입력",
@@ -65,6 +67,7 @@ export const newFlow: Record<
     analyzingButton: "분석 중...",
   },
   ja: {
+    backToDashboard: "← ダッシュボードへ",
     stepAria: "新しい学習の進行段階",
     stepSource: "原文入力",
     stepTranslate: "翻訳入力",

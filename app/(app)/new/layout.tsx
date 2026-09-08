@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useLocale } from "@/lib/hooks/useLocale";
 import { newFlow } from "@/lib/i18n/new";
@@ -43,10 +44,14 @@ function StepProgress() {
 }
 
 export default function NewFlowLayout({ children }: { children: React.ReactNode }) {
+  const t = newFlow[useLocale()];
   return (
     <FlowProvider>
       <div className="flex flex-1 justify-center bg-zinc-50 px-4 py-10">
         <main className="flex w-full max-w-3xl flex-col gap-6">
+          <Link href="/dashboard" className="self-start text-sm text-zinc-600 hover:text-zinc-900 hover:underline">
+            {t.backToDashboard}
+          </Link>
           <StepProgress />
           {children}
         </main>
