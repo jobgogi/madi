@@ -17,14 +17,14 @@ export default function HistoryPage() {
     ? filterSessionsByCategory(sessions ?? [], categoryFilter)
     : sessions;
 
-  function handleDelete(id: string) {
-    deleteSession(id);
+  async function handleDelete(id: string) {
+    await deleteSession(id);
     setSessions((prev) => (prev ? prev.filter((s) => s.id !== id) : prev));
   }
 
-  function handleClearAll() {
+  async function handleClearAll() {
     if (!window.confirm("저장된 분석 기록을 모두 삭제할까요?")) return;
-    clearHistory();
+    await clearHistory();
     setSessions([]);
   }
 

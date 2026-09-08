@@ -142,10 +142,10 @@ export default function SessionReportPage() {
 
   const comparison = previous ? compareSessions(session, previous) : null;
 
-  function handleDeleteSession() {
+  async function handleDeleteSession() {
     if (!session) return;
     if (!window.confirm("이 기록을 삭제할까요?")) return;
-    deleteSession(session.id);
+    await deleteSession(session.id);
     router.push("/history");
   }
 

@@ -9,7 +9,6 @@ function makeSession(
   return {
     id: crypto.randomUUID(),
     createdAt,
-    schemaVersion: 3,
     provider: "claude",
     direction,
     sentences: [
