@@ -66,7 +66,7 @@ export const VocabularyItemSchema = z
       .string()
       .nullable()
       .describe("한자 읽기(요미가나/furigana). 필요 없으면 null"),
-    meaning: z.string().describe("한국어 뜻"),
+    meaning: z.string().describe("이 단어의 뜻 (사용자 모국어로 설명)"),
     level: z
       .enum(JLPT_LEVELS)
       .nullable()

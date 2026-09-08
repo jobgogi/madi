@@ -11,6 +11,7 @@ const RequestSchema = z.object({
   model: z.string().optional(),
   workspaceId: z.string().optional(),
   direction: z.enum(DIRECTIONS),
+  nativeLanguage: z.enum(["ko", "ja"]),
   sentences: z
     .array(
       z.object({

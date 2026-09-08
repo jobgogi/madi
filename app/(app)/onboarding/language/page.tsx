@@ -1,9 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNativeLanguage } from "@/lib/hooks/useNativeLanguage";
-import type { NativeLanguage } from "@/lib/native-language";
+import { detectBrowserLanguage, type NativeLanguage } from "@/lib/native-language";
 
 const OPTIONS: { value: NativeLanguage; label: string; description: string }[] = [
   { value: "ko", label: "한국어", description: "일본어 문장을 한국어로 번역하며 학습해요" },
@@ -14,6 +14,12 @@ export default function LanguageSelectPage() {
   const router = useRouter();
   const { language, setLanguage } = useNativeLanguage();
   const [selected, setSelected] = useState<NativeLanguage>(language ?? "ko");
+
+  // 마운트 후 브라우저 언어 설정을 기본 선택값으로 반영 (SSR과 다를 수
+  // 있어 렌더 중이 아니라 effect에서 갱신 - hydration 안전).
+  useEffect(() => {
+    setSelected(detectBrowserLanguage());
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
