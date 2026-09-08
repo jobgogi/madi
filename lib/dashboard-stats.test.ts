@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildActivityGrid, categoryCounts } from "./dashboard-stats";
+import { buildActivityGrid, categoryCounts, monthLabels } from "./dashboard-stats";
 import type { HistorySession } from "./history";
 
 function makeSession(
@@ -62,6 +62,25 @@ describe("buildActivityGrid", () => {
     const grid = buildActivityGrid([], 14, today);
     const last = grid[13][6];
     expect(last.future).toBe(last.date > `${today.getFullYear()}-09-07`);
+  });
+});
+
+describe("monthLabels", () => {
+  it("labels only the first week column of each month, in order", () => {
+    const grid = buildActivityGrid([], 53, today);
+    const labels = monthLabels(grid);
+    expect(labels).toHaveLength(53);
+    const placed = labels.filter((m) => m !== null);
+    expect(placed[0]).toBe(Number(grid[0][0].date.slice(5, 7)));
+    for (let i = 1; i < placed.length; i++) {
+      const diff = (placed[i]! - placed[i - 1]! + 12) % 12;
+      expect(diff).toBe(1);
+    }
+  });
+
+  it("returns no label for a single-week grid beyond the first column", () => {
+    const grid = buildActivityGrid([], 1, today);
+    expect(monthLabels(grid)).toEqual([Number(grid[0][0].date.slice(5, 7))]);
   });
 });
 
