@@ -61,11 +61,11 @@ export type GrammarPoint = z.infer<typeof GrammarPointSchema>;
 
 export const VocabularyItemSchema = z
   .object({
-    word: z.string().describe("원문에 나온 단어/표현 (한자 등 원형 그대로)"),
+    word: z.string().describe("원문(source) 언어로 된 단어/표현 원형 그대로 - 번역 결과물 언어의 단어를 넣으면 안 됨"),
     reading: z
       .string()
       .nullable()
-      .describe("한자 읽기(요미가나/furigana). 필요 없으면 null"),
+      .describe("word의 읽는 법(예: 한자 요미가나, 또는 다른 언어의 발음 표기). 필요 없으면 null"),
     meaning: z.string().describe("이 단어의 뜻 (사용자 모국어로 설명)"),
     level: z
       .enum(JLPT_LEVELS)
