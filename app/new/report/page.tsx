@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { CATEGORY_LABEL } from "@/lib/dashboard-stats";
 import { SEVERITY_LABEL, SEVERITY_STYLE } from "@/lib/severity-style";
+import { StarIcon, WarningTriangleIcon } from "@/components/icons";
 import { useFlow } from "../flow-context";
 
 export default function NewFlowReportPage() {
@@ -46,7 +47,7 @@ export default function NewFlowReportPage() {
 
       <section>
         <h2 className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-zinc-900">
-          <span aria-hidden>⭐</span> 가장 잘한 점
+          <StarIcon className="h-4 w-4" /> 가장 잘한 점
         </h2>
         {report.strengths.length === 0 ? (
           <p className="text-sm text-zinc-500">이번엔 특별히 강조할 점을 찾지 못했습니다.</p>
@@ -65,7 +66,7 @@ export default function NewFlowReportPage() {
 
       <section className="rounded-lg border border-red-300 bg-red-50/40 p-3">
         <h2 className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-zinc-900">
-          <span aria-hidden>⚠️</span> 아쉬운 점
+          <WarningTriangleIcon className="h-4 w-4" /> 아쉬운 점
         </h2>
         {report.points.length === 0 ? (
           <p className="text-sm text-zinc-500">특별히 짚을 만한 지적 사항이 없습니다.</p>
@@ -93,7 +94,7 @@ export default function NewFlowReportPage() {
 
       <button
         type="button"
-        onClick={() => router.push("/")}
+        onClick={() => router.push("/dashboard")}
         aria-label="저장하고 대시보드로 이동"
         className="self-start rounded-full bg-zinc-900 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-700"
       >
