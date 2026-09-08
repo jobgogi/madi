@@ -1,7 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { DIRECTIONS, type Direction } from "@/lib/analysis-schema";
+import { useHasApiKey } from "@/lib/hooks/useHasApiKey";
 import { SourceEditor } from "@/components/SourceEditor";
 import { buildParagraphGroups, useFlow } from "./flow-context";
 
@@ -13,6 +15,7 @@ const DIRECTION_LABEL: Record<Direction, string> = {
 export default function NewSourcePage() {
   const router = useRouter();
   const { direction, setDirection, paragraphs, setParagraphs, setGroups } = useFlow();
+  const hasApiKey = useHasApiKey();
 
   function handleNext() {
     if (paragraphs.length === 0) return;
@@ -28,6 +31,16 @@ export default function NewSourcePage() {
           단락 구조를 유지한 채 원문을 입력하세요. 다음 단계에서 단락별로 문장을 나눠 번역합니다.
         </p>
       </header>
+
+      {hasApiKey === false && (
+        <div className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-800">
+          아직 AI 모델이 설정되지 않았습니다.{" "}
+          <Link href="/settings" className="font-medium underline">
+            설정 화면
+          </Link>
+          에서 API 키를 먼저 등록해주세요.
+        </div>
+      )}
 
       <div className="flex gap-2" role="group" aria-label="번역 방향 선택">
         {DIRECTIONS.map((d) => (

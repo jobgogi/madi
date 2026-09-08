@@ -7,6 +7,7 @@ import type { NativeLanguage } from "@/lib/native-language";
 import { useSettingsForm } from "@/lib/hooks/useSettingsForm";
 import { useTestConnection } from "@/lib/hooks/useTestConnection";
 import { useNativeLanguage } from "@/lib/hooks/useNativeLanguage";
+import { useSignOut } from "@/lib/hooks/useSignOut";
 
 const NATIVE_LANGUAGE_OPTIONS: { value: NativeLanguage; label: string }[] = [
   { value: "ko", label: "한국어" },
@@ -46,6 +47,7 @@ export default function SettingsPage() {
     useSettingsForm();
   const { state: testState, test: testConnection } = useTestConnection();
   const { language, setLanguage } = useNativeLanguage();
+  const { signOut, loading: signingOut } = useSignOut();
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -75,10 +77,6 @@ export default function SettingsPage() {
           <h1 className="mt-2 text-xl font-semibold text-zinc-900">
             설정
           </h1>
-          <p className="mt-1 text-sm text-zinc-500">
-            사용할 AI와 API 키를 선택하세요. 키는 이 브라우저의 localStorage에만
-            저장되며, 분석 요청 시 서버로 전달되어 API 호출에만 사용됩니다.
-          </p>
         </header>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-5">
@@ -105,6 +103,14 @@ export default function SettingsPage() {
           </div>
 
           <hr className="border-zinc-200" />
+
+          <div className="flex flex-col gap-1.5">
+            <span className="text-sm font-medium text-zinc-700">AI 모델</span>
+            <p className="text-sm text-zinc-500">
+              사용할 AI와 API 키를 선택하세요. 키는 이 브라우저의 localStorage에만
+              저장되며, 분석 요청 시 서버로 전달되어 API 호출에만 사용됩니다.
+            </p>
+          </div>
 
           <label className="flex flex-col gap-1.5">
             <span className="text-sm font-medium text-zinc-700">
@@ -217,6 +223,19 @@ export default function SettingsPage() {
             )}
           </div>
         </form>
+
+        <hr className="border-zinc-200" />
+
+        <div className="flex flex-col gap-1.5">
+          <button
+            type="button"
+            onClick={() => void signOut()}
+            disabled={signingOut}
+            className="w-full rounded-full border border-red-600 px-5 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50"
+          >
+            {signingOut ? "로그아웃 중..." : "로그아웃"}
+          </button>
+        </div>
       </main>
     </div>
   );

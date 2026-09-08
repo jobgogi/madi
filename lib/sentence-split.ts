@@ -1,4 +1,7 @@
-const SENTENCE_END_RE = /(?<=[.!?。！？])\s*/;
+// \s* 대신 \s+를 써야 한다 - 빈 문자열도 매치되는 \s*는 "Vue.js", "3.14"처럼
+// 마침표 뒤에 공백 없이 글자가 바로 오는 경우까지 문장으로 쪼개버렸다.
+// 공백(또는 문자열 끝)이 실제로 뒤따를 때만 문장 경계로 본다.
+const SENTENCE_END_RE = /(?<=[.!?。！？])\s+/;
 
 export function splitIntoSentences(text: string): string[] {
   return text
