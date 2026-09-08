@@ -6,7 +6,6 @@ import { FlowProvider } from "./flow-context";
 const STEPS = [
   { href: "/new", label: "원문 입력" },
   { href: "/new/translate", label: "번역 입력" },
-  { href: "/new/report", label: "리포트" },
 ];
 
 function StepProgress() {

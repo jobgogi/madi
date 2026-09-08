@@ -11,8 +11,14 @@ const RequestSchema = z.object({
   model: z.string().optional(),
   workspaceId: z.string().optional(),
   direction: z.enum(DIRECTIONS),
-  sourceText: z.string().min(1, "원문을 입력해주세요."),
-  userTranslation: z.string().min(1, "번역을 입력해주세요."),
+  sentences: z
+    .array(
+      z.object({
+        sourceText: z.string().min(1, "원문을 입력해주세요."),
+        userTranslation: z.string().min(1, "번역을 입력해주세요."),
+      }),
+    )
+    .min(1, "분석할 문장이 없습니다."),
 });
 
 export async function POST(req: NextRequest) {
@@ -40,8 +46,8 @@ export async function POST(req: NextRequest) {
 
   const startedAt = Date.now();
   try {
-    const report = await runAnalysis(parsedBody.data);
-    return NextResponse.json({ report, durationMs: Date.now() - startedAt });
+    const reports = await runAnalysis(parsedBody.data);
+    return NextResponse.json({ reports, durationMs: Date.now() - startedAt });
   } catch (error) {
     const { status, message } = describeProviderError(error);
     return NextResponse.json({ error: message }, { status });

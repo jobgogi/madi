@@ -4,8 +4,8 @@ import OpenAI from "openai";
 import { GoogleGenAI, ApiError as GeminiApiError } from "@google/genai";
 import { z } from "zod/v4";
 import {
+  BatchTranslationAnalysisReportSchema,
   DIRECTION_LANG,
-  TranslationAnalysisReportSchema,
   type Direction,
   type TranslationAnalysisReport,
 } from "@/lib/analysis-schema";
@@ -25,7 +25,7 @@ const DEFAULT_MODEL: Record<Provider, string> = {
 
 // 응답 JSON 스키마를 provider에 전달하기 전에 $schema 같은 메타 키를 제거한다.
 function toResponseJsonSchema(): Record<string, unknown> {
-  const { $schema, ...schema } = z.toJSONSchema(TranslationAnalysisReportSchema) as Record<
+  const { $schema, ...schema } = z.toJSONSchema(BatchTranslationAnalysisReportSchema) as Record<
     string,
     unknown
   >;
@@ -108,11 +108,22 @@ ${readingRule} 필요 없으면 null로 두세요. 너무 쉬운 기초 단어�
 - critical에 해당하지 않는 이상, 번역에는 정답이 여러 개 있을 수 있으므로 "틀렸다"고 단정하지 말고 원문 뉘앙스와의 차이를 설명하는 방식으로 코멘트하세요.
 - 지적할 내용이 없으면 grammar_points를 빈 배열로 두세요. 억지로 지적을 만들어내지 마세요.
 - user_expression은 사용자 번역문 안에서 실제로 찾을 수 있는 표현일 때만 채우고, 해당 요소가 통째로 누락된 경우 null로 두세요.
-- suggested_translations는 "정답"이 아니라 참고용 대안 번역입니다. 사용자 번역이 이미 자연스럽다면 비워둬도 됩니다. **반드시 ${target}로만 작성하세요 — ${source}로 답하지 마세요.**
+- suggested_translations는 "정답"이 아니라 참고용 대안 번역입니다. 사용자 번역이 이미 자연스럽다면 비워둬도 됩니다.
 - overall_comment, difficulty.comment 등 서술형 텍스트는 한국어로 설명하되, 그 안에 인용하는 번역 예문 자체는 반드시 ${target}여야 합니다.
 - ${difficultyRule}
 
+[언어 규칙 — 절대 어기지 말 것]
+suggested_translations 배열의 모든 항목은 예외 없이 ${target}로만 작성하세요. ${source}로 쓰거나 다른 언어를 섞으면 안 됩니다. 이 규칙은 아래에 문장이 여러 개 주어져도, 몇 번째 문장이든 관계없이 배열의 모든 원소에 동일하게 적용됩니다.
+
+[여러 문장 처리]
+아래에 문장이 번호대로 여러 개 주어집니다. reports 배열에 정확히 같은 개수(N개)를, 주어진 순서 그대로 담아 응답하세요. 문장끼리 서로 영향을 주지 않고 각각 독립적으로 분석하되, 위 [언어 규칙]은 1번째 문장이든 마지막 문장이든 예외 없이 똑같이 지키세요.
+
 정의된 JSON 스키마 형식으로만 응답하고, 다른 설명 텍스트를 앞뒤에 붙이지 마세요.`;
+}
+
+interface SentencePair {
+  sourceText: string;
+  userTranslation: string;
 }
 
 interface RunAnalysisParams {
@@ -122,22 +133,39 @@ interface RunAnalysisParams {
   // Claude 멀티 워크스페이스 개인 키에서만 필요. anthropic-workspace-id 헤더로 전달된다.
   workspaceId?: string;
   direction: Direction;
-  sourceText: string;
-  userTranslation: string;
+  sentences: SentencePair[];
 }
 
-function buildUserContent(
-  direction: Direction,
-  sourceText: string,
-  userTranslation: string,
-): string {
+// 시스템 프롬프트에서 이미 언어 규칙을 명시해도, 문장이 여러 개 배치로
+// 들어가면 뒤쪽 문장으로 갈수록 suggested_translations가 ${source}로
+// 새는 경우가 실제로 관측됐다 - 문장 블록마다 바로 옆에서 다시 한 번
+// 못박아서 항목별로 잊혀지지 않게 한다.
+function buildUserContent(direction: Direction, sentences: SentencePair[]): string {
   const { source, target } = DIRECTION_LANG[direction];
-  return `[${source} 원문]\n${sourceText}\n\n[사용자의 ${target} 번역]\n${userTranslation}`;
+  return sentences
+    .map(
+      ({ sourceText, userTranslation }, i) =>
+        `[${i + 1}번째 문장]\n[${source} 원문]\n${sourceText}\n\n[사용자의 ${target} 번역]\n${userTranslation}\n(이 문장의 suggested_translations는 반드시 ${target}로만 작성)`,
+    )
+    .join("\n\n");
+}
+
+// 배치 응답이 입력 문장 개수와 정확히 일치하는지 확인 - LLM이 개수를
+// 틀리면 이후 입력과 report를 순서로 매칭하는 로직 전체가 깨지므로 여기서
+// 바로 걸러낸다.
+function assertReportCount(
+  reports: TranslationAnalysisReport[],
+  expected: number,
+): TranslationAnalysisReport[] {
+  if (reports.length !== expected) {
+    throw new AnalysisParseError();
+  }
+  return reports;
 }
 
 async function runClaudeAnalysis(
   params: RunAnalysisParams,
-): Promise<TranslationAnalysisReport> {
+): Promise<TranslationAnalysisReport[]> {
   const client = new Anthropic({ apiKey: params.apiKey });
 
   const response = await client.messages.parse(
@@ -148,16 +176,12 @@ async function runClaudeAnalysis(
       messages: [
         {
           role: "user",
-          content: buildUserContent(
-            params.direction,
-            params.sourceText,
-            params.userTranslation,
-          ),
+          content: buildUserContent(params.direction, params.sentences),
         },
       ],
       output_config: {
         effort: "medium",
-        format: zodOutputFormat(TranslationAnalysisReportSchema),
+        format: zodOutputFormat(BatchTranslationAnalysisReportSchema),
       },
     },
     params.workspaceId
@@ -168,10 +192,10 @@ async function runClaudeAnalysis(
   if (!response.parsed_output) {
     throw new AnalysisParseError();
   }
-  return response.parsed_output;
+  return assertReportCount(response.parsed_output.reports, params.sentences.length);
 }
 
-function parseReport(raw: string | undefined | null): TranslationAnalysisReport {
+function parseReport(raw: string | undefined | null): TranslationAnalysisReport[] {
   if (!raw) {
     throw new AnalysisParseError();
   }
@@ -181,16 +205,16 @@ function parseReport(raw: string | undefined | null): TranslationAnalysisReport 
   } catch {
     throw new AnalysisParseError();
   }
-  const result = TranslationAnalysisReportSchema.safeParse(parsedJson);
+  const result = BatchTranslationAnalysisReportSchema.safeParse(parsedJson);
   if (!result.success) {
     throw new AnalysisParseError();
   }
-  return result.data;
+  return result.data.reports;
 }
 
 async function runOpenAIAnalysis(
   params: RunAnalysisParams,
-): Promise<TranslationAnalysisReport> {
+): Promise<TranslationAnalysisReport[]> {
   const client = new OpenAI({ apiKey: params.apiKey });
 
   const completion = await client.chat.completions.create({
@@ -199,11 +223,7 @@ async function runOpenAIAnalysis(
       { role: "system", content: buildSystemPrompt(params.direction) },
       {
         role: "user",
-        content: buildUserContent(
-          params.direction,
-          params.sourceText,
-          params.userTranslation,
-        ),
+        content: buildUserContent(params.direction, params.sentences),
       },
     ],
     response_format: {
@@ -216,22 +236,21 @@ async function runOpenAIAnalysis(
     },
   });
 
-  return parseReport(completion.choices[0]?.message?.content);
+  return assertReportCount(
+    parseReport(completion.choices[0]?.message?.content),
+    params.sentences.length,
+  );
 }
 
 async function runGeminiAnalysis(
   params: RunAnalysisParams,
-): Promise<TranslationAnalysisReport> {
+): Promise<TranslationAnalysisReport[]> {
   const client = new GoogleGenAI({ apiKey: params.apiKey });
 
   const response = await withGeminiRetry(() =>
     client.models.generateContent({
       model: params.model || DEFAULT_MODEL.gemini,
-      contents: buildUserContent(
-        params.direction,
-        params.sourceText,
-        params.userTranslation,
-      ),
+      contents: buildUserContent(params.direction, params.sentences),
       config: {
         systemInstruction: buildSystemPrompt(params.direction),
         responseMimeType: "application/json",
@@ -240,12 +259,12 @@ async function runGeminiAnalysis(
     }),
   );
 
-  return parseReport(response.text);
+  return assertReportCount(parseReport(response.text), params.sentences.length);
 }
 
 export async function runAnalysis(
   params: RunAnalysisParams,
-): Promise<TranslationAnalysisReport> {
+): Promise<TranslationAnalysisReport[]> {
   switch (params.provider) {
     case "claude":
       return runClaudeAnalysis(params);

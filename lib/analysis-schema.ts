@@ -117,3 +117,17 @@ export const TranslationAnalysisReportSchema = z
 export type TranslationAnalysisReport = z.infer<
   typeof TranslationAnalysisReportSchema
 >;
+
+// 여러 문장을 한 번의 LLM 호출로 분석할 때의 응답 형태 - 입력 문장 개수와
+// 같은 길이의 배열을 순서대로 반환해야 한다 (순서로 입력과 매칭).
+export const BatchTranslationAnalysisReportSchema = z
+  .object({
+    reports: z
+      .array(TranslationAnalysisReportSchema)
+      .describe("입력된 문장과 같은 개수·순서로 분석 결과를 담은 배열"),
+  })
+  .strict();
+
+export type BatchTranslationAnalysisReport = z.infer<
+  typeof BatchTranslationAnalysisReportSchema
+>;
