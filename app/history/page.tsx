@@ -53,7 +53,7 @@ export default function HistoryPage() {
         <header className="flex items-start justify-between gap-4">
           <div>
             <Link
-              href="/"
+              href="/dashboard"
               className="text-sm text-zinc-600 hover:text-zinc-900 hover:underline"
             >
               ← 대시보드로
