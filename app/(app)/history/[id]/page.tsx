@@ -8,8 +8,16 @@ import { JLPT_STYLE } from "@/lib/jlpt-style";
 import { SEVERITY_LABEL, SEVERITY_ORDER, SEVERITY_STYLE } from "@/lib/severity-style";
 import { aggregateSeverityCounts, compareSessions } from "@/lib/session-summary";
 import { useHistorySession } from "@/lib/hooks/useHistorySession";
+import { useSessionFeedback } from "@/lib/hooks/useSessionFeedback";
 import { TranslationComparison } from "@/components/TranslationComparison";
-import { PrinterIcon, StarIcon, TrendingUpIcon, WarningTriangleIcon } from "@/components/icons";
+import {
+  PrinterIcon,
+  StarIcon,
+  ThumbsDownIcon,
+  ThumbsUpIcon,
+  TrendingUpIcon,
+  WarningTriangleIcon,
+} from "@/components/icons";
 
 const PROVIDER_LABEL: Record<HistorySession["provider"], string> = {
   claude: "Claude",
@@ -108,6 +116,7 @@ export default function SessionReportPage() {
   const router = useRouter();
 
   const { session, previous } = useHistorySession(params.id);
+  const { feedback, setFeedback } = useSessionFeedback(session?.id ?? null);
 
   if (session === undefined) return null;
 
@@ -176,6 +185,28 @@ export default function SessionReportPage() {
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-3 print:hidden">
+            <button
+              type="button"
+              onClick={() => setFeedback("good")}
+              aria-label="도움이 됐어요"
+              aria-pressed={feedback === "good"}
+              className={`flex items-center gap-1.5 text-sm ${
+                feedback === "good" ? "text-emerald-600" : "text-zinc-500 hover:text-zinc-900"
+              }`}
+            >
+              <ThumbsUpIcon className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setFeedback("bad")}
+              aria-label="아쉬웠어요"
+              aria-pressed={feedback === "bad"}
+              className={`flex items-center gap-1.5 text-sm ${
+                feedback === "bad" ? "text-red-600" : "text-zinc-500 hover:text-zinc-900"
+              }`}
+            >
+              <ThumbsDownIcon className="h-4 w-4" />
+            </button>
             <button
               type="button"
               onClick={() => window.print()}
