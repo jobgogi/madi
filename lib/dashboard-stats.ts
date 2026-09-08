@@ -69,6 +69,18 @@ export function buildActivityGrid(
   return grid;
 }
 
+// 잔디 그래프 위에 표시할 월 라벨 - 각 열의 첫째 날(일요일) 기준으로 월이
+// 바뀌는 열에만 1~12 값을 반환하고, 나머지 열은 null(라벨 없음).
+export function monthLabels(grid: ActivityDay[][]): (number | null)[] {
+  let lastMonth = -1;
+  return grid.map((week) => {
+    const month = Number(week[0].date.slice(5, 7));
+    if (month === lastMonth) return null;
+    lastMonth = month;
+    return month;
+  });
+}
+
 export interface CategoryCount {
   category: PointCategory;
   count: number;

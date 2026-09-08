@@ -17,7 +17,7 @@ export interface DashboardData {
 // 중에는 null을 반환한다.
 export function useDashboardData(
   direction: DirectionFilter,
-  weeks = 14,
+  weeks = 53,
   recentLimit = 5,
 ): DashboardData | null {
   const [sessions] = useSessions();

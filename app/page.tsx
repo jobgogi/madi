@@ -1,150 +1,89 @@
-"use client";
-
-import { useState } from "react";
 import Link from "next/link";
-import { CATEGORY_LABEL, type ActivityDay } from "@/lib/dashboard-stats";
-import { DIRECTION_FILTER_OPTIONS, useDashboardData, type DirectionFilter } from "@/lib/hooks/useDashboardData";
-import { SessionCard } from "@/components/SessionCard";
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { EditCompareIcon, LockIcon, ShieldBadgeIcon, TrendingUpIcon, WarningTriangleIcon } from "@/components/icons";
 
-const LEVEL_COLOR: Record<ActivityDay["level"], string> = {
-  0: "bg-zinc-100",
-  1: "bg-teal-100",
-  2: "bg-teal-300",
-  3: "bg-teal-500",
-  4: "bg-teal-700",
-};
+const FEATURES = [
+  {
+    Icon: EditCompareIcon,
+    title: "문장 단위 정밀 비교",
+    body: "원문을 자동으로 문장 단위로 나누고, AI 기준 번역과 내 번역을 색으로 대조해 어디가 다른지 한눈에 보여줘요.",
+  },
+  {
+    Icon: WarningTriangleIcon,
+    title: "뜻이 뒤바뀌는 실수부터 우선 확인",
+    body: "부정어 누락처럼 의미가 반전되는 critical 오류를 가장 먼저 짚고, 조사·경어·어순·뉘앙스까지 10개 카테고리로 나눠 알려드려요.",
+  },
+  {
+    Icon: ShieldBadgeIcon,
+    title: "JLPT · TOPIK 레벨 자동 판정",
+    body: "번역한 문장의 난이도를 자동으로 측정해, 내가 지금 어느 수준인지 문장마다 확인할 수 있어요.",
+  },
+  {
+    Icon: TrendingUpIcon,
+    title: "그래프로 보는 성장",
+    body: "잔디 그래프로 학습 꾸준함을, 카테고리별 통계로 자주 틀리는 부분이 줄어드는지 눈으로 확인하세요.",
+  },
+  {
+    Icon: LockIcon,
+    title: "내 API 키로, 내 방식대로",
+    body: "OpenAI · Claude · Gemini 중 원하는 AI를 선택하세요. API 키는 서버를 거치지 않고 이 브라우저에만 저장됩니다.",
+  },
+];
 
-const DIRECTION_FILTER_LABEL: Record<DirectionFilter, string> = {
-  all: "전체",
-  ja_to_ko: "日→韓",
-  ko_to_ja: "韓→日",
-};
+function GoogleCta() {
+  return (
+    <Link
+      href="/signin"
+      className="flex items-center justify-center gap-2 rounded-full bg-zinc-900 px-7 py-3 text-[15px] font-medium text-white transition-colors hover:bg-zinc-700"
+    >
+      <img src="/google-icon.svg" alt="" className="h-[18px] w-[18px]" />
+      Google로 시작하기
+    </Link>
+  );
+}
 
-export default function Dashboard() {
-  const [direction, setDirection] = useState<DirectionFilter>("all");
-  const data = useDashboardData(direction);
-
-  if (!data) {
-    return (
-      <div className="flex flex-1 items-center justify-center bg-zinc-50 px-4 py-10">
-        <div role="status" aria-live="polite" className="text-sm text-zinc-500">
-          불러오는 중...
-        </div>
-      </div>
-    );
-  }
-
-  const { activityGrid, categories, recent } = data;
+export default async function LandingPage() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (user) redirect("/dashboard");
 
   return (
-    <div className="flex flex-1 justify-center bg-zinc-50 px-4 py-10">
-      <main className="flex w-full max-w-3xl flex-col gap-8">
-        <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <h1 className="text-xl font-semibold text-zinc-900">마디 — 일한 번역 학습 도구</h1>
-            <p className="mt-1 text-sm text-zinc-500">
-              AI가 만든 기준 번역과 내 번역을 비교하며, 한 문장씩 짚어가는 번역 학습
-            </p>
-          </div>
-          <div className="flex shrink-0 items-center gap-3">
-            <Link href="/settings" className="text-sm text-zinc-600 hover:text-zinc-900 hover:underline">
-              설정
-            </Link>
-            <Link
-              href="/new"
-              className="rounded-full bg-zinc-900 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-700"
-            >
-              새 학습 시작
-            </Link>
-          </div>
-        </header>
+    <div className="flex-1 bg-zinc-50">
+      <section className="flex flex-col items-center gap-5 px-4 pb-14 pt-16 text-center sm:pt-20">
+        <span className="rounded-full bg-zinc-100 px-3.5 py-1 text-xs font-medium text-zinc-600">
+          일본어를 배우는 한국인, 한국어를 배우는 일본인을 위한
+        </span>
+        <h1 className="max-w-xl text-3xl leading-snug font-bold text-zinc-900 sm:text-4xl">
+          내 번역, <span className="text-teal-700">AI가 문장 하나하나</span> 짚어드립니다
+        </h1>
+        <p className="max-w-md text-base leading-relaxed text-zinc-600">
+          AI가 만든 기준 번역과 내 번역을 비교하며, 한 문장씩 짚어가는 번역 학습 — 마디
+        </p>
+        <div className="mt-2 flex flex-col items-center gap-2.5">
+          <GoogleCta />
+          <p className="text-xs text-zinc-400">무료로 시작 · 내 API 키는 이 브라우저에만 저장됩니다</p>
+        </div>
+      </section>
 
-        <div className="flex gap-2" role="group" aria-label="번역 방향 필터">
-          {DIRECTION_FILTER_OPTIONS.map((d) => (
-            <button
-              key={d}
-              type="button"
-              onClick={() => setDirection(d)}
-              aria-pressed={direction === d}
-              className={`rounded-full border px-4 py-1.5 text-sm font-medium transition-colors ${
-                direction === d
-                  ? "border-zinc-900 bg-zinc-900 text-white"
-                  : "border-zinc-300 text-zinc-700 hover:bg-zinc-100"
-              }`}
-            >
-              {DIRECTION_FILTER_LABEL[d]}
-            </button>
+      <section className="flex justify-center px-4 pb-16">
+        <div className="grid w-full max-w-4xl grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-4">
+          {FEATURES.map(({ Icon, title, body }) => (
+            <div key={title} className="flex flex-col gap-2.5 rounded-lg border border-zinc-200 bg-white p-5">
+              <Icon className="h-5 w-5 text-teal-700" />
+              <p className="text-[15px] font-semibold text-zinc-900">{title}</p>
+              <p className="text-[13.5px] leading-relaxed text-zinc-500">{body}</p>
+            </div>
           ))}
         </div>
+      </section>
 
-        <section aria-label="일별 학습 활동">
-          <h2 className="mb-2 text-sm font-semibold text-zinc-900">학습 활동</h2>
-          <div className="rounded-lg border border-zinc-200 bg-white p-4">
-            <div className="flex gap-1 overflow-x-auto">
-              {activityGrid.map((week, wi) => (
-                <div key={wi} className="flex flex-col gap-1">
-                  {week.map((day) => (
-                    <div
-                      key={day.date}
-                      title={`${day.date} · ${day.count}건`}
-                      className={`h-3 w-3 rounded-sm ${day.future ? "bg-zinc-50" : LEVEL_COLOR[day.level]}`}
-                    />
-                  ))}
-                </div>
-              ))}
-            </div>
-            <div className="mt-3 flex items-center justify-end gap-1 text-xs text-zinc-500">
-              <span>적음</span>
-              {([0, 1, 2, 3, 4] as const).map((l) => (
-                <span key={l} aria-hidden className={`h-3 w-3 rounded-sm ${LEVEL_COLOR[l]}`} />
-              ))}
-              <span>많음</span>
-            </div>
-          </div>
-        </section>
-
-        <section aria-label="자주 틀리는 카테고리">
-          <h2 className="mb-2 text-sm font-semibold text-zinc-900">자주 틀리는 카테고리</h2>
-          {categories.length === 0 ? (
-            <p className="rounded-lg border border-dashed border-zinc-300 p-6 text-center text-sm text-zinc-500">
-              아직 집계할 기록이 없습니다.
-            </p>
-          ) : (
-            <div className="grid grid-cols-[repeat(auto-fill,minmax(110px,1fr))] gap-2">
-              {categories.map(({ category, count }) => (
-                <Link
-                  key={category}
-                  href={`/history?category=${category}`}
-                  aria-label={`${CATEGORY_LABEL[category]} ${count}건 — 해당 기록으로 이동`}
-                  className="flex flex-col gap-1 rounded-lg border border-zinc-200 bg-white p-3 hover:border-zinc-400"
-                >
-                  <span className="text-xs text-zinc-500">{CATEGORY_LABEL[category]}</span>
-                  <span className="text-lg font-semibold text-zinc-900">{count}건</span>
-                </Link>
-              ))}
-            </div>
-          )}
-        </section>
-
-        <section aria-label="최근 기록">
-          <h2 className="mb-2 text-sm font-semibold text-zinc-900">최근 기록</h2>
-          {recent.length === 0 ? (
-            <p className="rounded-lg border border-dashed border-zinc-300 p-6 text-center text-sm text-zinc-500">
-              아직 저장된 분석 기록이 없습니다.
-            </p>
-          ) : (
-            <ul className="flex flex-col gap-2">
-              {recent.map((session) => (
-                <SessionCard key={session.id} session={session} />
-              ))}
-            </ul>
-          )}
-        </section>
-
-        <Link href="/history" className="self-center text-sm text-zinc-600 hover:text-zinc-900 hover:underline">
-          전체 기록 보기
-        </Link>
-      </main>
+      <section className="flex flex-col items-center gap-4 border-t border-zinc-200 px-4 py-14 text-center">
+        <h2 className="text-xl font-semibold text-zinc-900">지금 바로 한 문장부터 시작해보세요</h2>
+        <GoogleCta />
+      </section>
     </div>
   );
 }

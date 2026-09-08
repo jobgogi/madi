@@ -12,6 +12,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## ルール
 - [基本ルール](.claude/rules/basic-rule.md)
 - [作業ルール](.claude/rules/working-rule.md)
+- [Git作業ルール](.claude/rules/git-rule.md)
 
 ## 要求事項
 - [デザイン要求事項](.claude/requirements/design-requirement.md)

@@ -17,14 +17,14 @@ export default function HistoryPage() {
     ? filterSessionsByCategory(sessions ?? [], categoryFilter)
     : sessions;
 
-  function handleDelete(id: string) {
-    deleteSession(id);
+  async function handleDelete(id: string) {
+    await deleteSession(id);
     setSessions((prev) => (prev ? prev.filter((s) => s.id !== id) : prev));
   }
 
-  function handleClearAll() {
+  async function handleClearAll() {
     if (!window.confirm("저장된 분석 기록을 모두 삭제할까요?")) return;
-    clearHistory();
+    await clearHistory();
     setSessions([]);
   }
 
@@ -53,7 +53,7 @@ export default function HistoryPage() {
         <header className="flex items-start justify-between gap-4">
           <div>
             <Link
-              href="/"
+              href="/dashboard"
               className="text-sm text-zinc-600 hover:text-zinc-900 hover:underline"
             >
               ← 대시보드로

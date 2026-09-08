@@ -3,8 +3,15 @@
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import type { Provider } from "@/lib/settings";
+import type { NativeLanguage } from "@/lib/native-language";
 import { useSettingsForm } from "@/lib/hooks/useSettingsForm";
 import { useTestConnection } from "@/lib/hooks/useTestConnection";
+import { useNativeLanguage } from "@/lib/hooks/useNativeLanguage";
+
+const NATIVE_LANGUAGE_OPTIONS: { value: NativeLanguage; label: string }[] = [
+  { value: "ko", label: "한국어" },
+  { value: "ja", label: "日本語" },
+];
 
 const PROVIDER_LABEL: Record<Provider, string> = {
   claude: "Claude (Anthropic)",
@@ -38,11 +45,12 @@ export default function SettingsPage() {
   const { provider, setProvider, apiKey, setApiKey, model, setModel, workspaceId, setWorkspaceId, save } =
     useSettingsForm();
   const { state: testState, test: testConnection } = useTestConnection();
+  const { language, setLanguage } = useNativeLanguage();
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     save();
-    router.push("/");
+    router.push("/dashboard");
   }
 
   function handleTestConnection() {
@@ -59,7 +67,7 @@ export default function SettingsPage() {
       <main className="flex w-full max-w-lg flex-col gap-8">
         <header>
           <Link
-            href="/"
+            href="/dashboard"
             className="text-sm text-zinc-600 hover:text-zinc-900 hover:underline"
           >
             ← 돌아가기
@@ -74,6 +82,30 @@ export default function SettingsPage() {
         </header>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+          <div className="flex flex-col gap-1.5">
+            <span className="text-sm font-medium text-zinc-700">학습 언어</span>
+            <div className="flex gap-2" role="group" aria-label="학습 언어 선택">
+              {NATIVE_LANGUAGE_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setLanguage(opt.value)}
+                  aria-pressed={language === opt.value}
+                  className={`rounded-full border px-4 py-1.5 text-sm font-medium transition-colors ${
+                    language === opt.value
+                      ? "border-zinc-900 bg-zinc-900 text-white"
+                      : "border-zinc-300 text-zinc-700 hover:bg-zinc-100"
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-zinc-500">선택한 언어에 따라 기본 번역 방향이 결정됩니다.</p>
+          </div>
+
+          <hr className="border-zinc-200" />
+
           <label className="flex flex-col gap-1.5">
             <span className="text-sm font-medium text-zinc-700">
               AI 제공자

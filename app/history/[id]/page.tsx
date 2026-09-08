@@ -9,6 +9,7 @@ import { SEVERITY_LABEL, SEVERITY_ORDER, SEVERITY_STYLE } from "@/lib/severity-s
 import { aggregateSeverityCounts, compareSessions } from "@/lib/session-summary";
 import { useHistorySession } from "@/lib/hooks/useHistorySession";
 import { TranslationComparison } from "@/components/TranslationComparison";
+import { PrinterIcon, StarIcon, TrendingUpIcon, WarningTriangleIcon } from "@/components/icons";
 
 const PROVIDER_LABEL: Record<HistorySession["provider"], string> = {
   claude: "Claude",
@@ -117,7 +118,7 @@ export default function SessionReportPage() {
           <p className="text-sm text-zinc-500">
             해당 기록을 찾을 수 없습니다.
           </p>
-          <Link href="/" className="text-sm underline">
+          <Link href="/dashboard" className="text-sm underline">
             대시보드로 돌아가기
           </Link>
         </main>
@@ -141,10 +142,10 @@ export default function SessionReportPage() {
 
   const comparison = previous ? compareSessions(session, previous) : null;
 
-  function handleDeleteSession() {
+  async function handleDeleteSession() {
     if (!session) return;
     if (!window.confirm("이 기록을 삭제할까요?")) return;
-    deleteSession(session.id);
+    await deleteSession(session.id);
     router.push("/history");
   }
 
@@ -154,7 +155,7 @@ export default function SessionReportPage() {
         <header className="flex items-start justify-between gap-4">
           <div>
             <Link
-              href="/"
+              href="/dashboard"
               className="text-sm text-zinc-600 hover:text-zinc-900 hover:underline print:hidden"
             >
               ← 대시보드로
@@ -179,9 +180,9 @@ export default function SessionReportPage() {
               type="button"
               onClick={() => window.print()}
               aria-label="리포트 인쇄"
-              className="text-sm text-zinc-500 hover:text-zinc-900"
+              className="flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-900"
             >
-              🖨️ 인쇄
+              <PrinterIcon className="h-4 w-4" /> 인쇄
             </button>
             <button
               type="button"
@@ -244,7 +245,7 @@ export default function SessionReportPage() {
 
         <section>
           <h2 className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-zinc-900">
-            <span aria-hidden>⭐</span> 가장 잘한 점
+            <StarIcon className="h-4 w-4" /> 가장 잘한 점
           </h2>
           {allStrengths.length === 0 ? (
             <p className="text-sm text-zinc-500">
@@ -270,7 +271,7 @@ export default function SessionReportPage() {
 
         <section className="rounded-lg border border-red-300 bg-red-50/40 p-3">
           <h2 className="mb-2 flex flex-wrap items-center gap-2 text-sm font-semibold text-zinc-900">
-            <span aria-hidden>⚠️</span> 아쉬운 점
+            <WarningTriangleIcon className="h-4 w-4" /> 아쉬운 점
             {(["critical", "warning", "info"] as const).map((severity) => (
               <span
                 key={severity}
@@ -299,7 +300,7 @@ export default function SessionReportPage() {
 
         <section>
           <h2 className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-zinc-900">
-            <span aria-hidden>📈</span> 이전 세션 대비 나아진 점
+            <TrendingUpIcon className="h-4 w-4" /> 이전 세션 대비 나아진 점
           </h2>
           {!comparison ? (
             <p className="text-sm text-zinc-500">
@@ -354,7 +355,7 @@ export default function SessionReportPage() {
 
         <button
           type="button"
-          onClick={() => router.push("/")}
+          onClick={() => router.push("/dashboard")}
           aria-label="완료하고 대시보드로 이동"
           className="self-start rounded-full bg-zinc-900 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-700 print:hidden"
         >
