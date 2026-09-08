@@ -1,9 +1,25 @@
 "use client";
 
+import { Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { useGoogleSignin } from "@/lib/hooks/useGoogleSignin";
 
 export default function SigninPage() {
+  return (
+    <Suspense>
+      <SigninForm />
+    </Suspense>
+  );
+}
+
+function SigninForm() {
   const { signIn, loading, error } = useGoogleSignin();
+  const searchParams = useSearchParams();
+  const callbackError =
+    searchParams.get("error") === "auth_callback_failed"
+      ? "로그인에 실패했습니다. 다시 시도해 주세요."
+      : null;
+  const displayError = error ?? callbackError;
 
   return (
     <div className="flex flex-1 items-center justify-center bg-zinc-50 px-4 py-10">
@@ -26,9 +42,9 @@ export default function SigninPage() {
           {loading ? "로그인 중..." : "Google로 로그인"}
         </button>
 
-        {error && (
+        {displayError && (
           <p role="alert" className="text-sm text-red-600">
-            {error}
+            {displayError}
           </p>
         )}
       </main>
