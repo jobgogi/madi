@@ -63,7 +63,6 @@ export default function HistoryPage() {
             </h1>
             <p className="mt-1 text-sm text-zinc-500">
               지금까지 분석한 기록을 난이도(JLPT 등급)별로 모아서 보여줍니다.
-              이 브라우저에만 저장되어 있습니다.
             </p>
           </div>
           {sessions !== null && sessions.length > 0 && (
