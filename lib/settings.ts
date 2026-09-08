@@ -44,3 +44,10 @@ export function saveSettings(settings: Settings): void {
   if (typeof window === "undefined") return;
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
 }
+
+// 로그아웃 시 호출 - 공용 컴퓨터에 다음 계정으로 로그인한 사람이 이전
+// 사용자의 API 키를 그대로 쓸 수 있는 걸 막는다.
+export function clearSettings(): void {
+  if (typeof window === "undefined") return;
+  window.localStorage.removeItem(STORAGE_KEY);
+}
