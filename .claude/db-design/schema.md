@@ -175,7 +175,7 @@ insert할지는 이번 설계에 포함하지 않았다. 테이블/RLS만 정의
 
 | 테이블 | select | insert/update | delete |
 |---|---|---|---|
-| `profiles` | 본인 행만 | 본인 행만 (트리거로 생성되므로 앱에서 insert할 일은 없음) | — |
+| `profiles` | 본인 행만 | 본인 행만 (트리거로 생성되지만, 트리거 도입 전 가입한 계정을 위해 `auth/callback`에서 upsert로 보충 — `20260908010000_profiles_insert_policy.sql`) | — |
 | `reports` | 본인 것만 | 본인 것만 | 본인 것만 |
 | `session_feedback` | 본인 것만 | 본인 것만 + `report_id`가 본인 리포트여야 함 | 본인 것만 |
 | `login_history` | 본인 것만 | 본인 것만 | — |

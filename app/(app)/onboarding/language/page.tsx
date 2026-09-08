@@ -15,9 +15,9 @@ export default function LanguageSelectPage() {
   const { language, setLanguage } = useNativeLanguage();
   const [selected, setSelected] = useState<NativeLanguage>(language ?? "ko");
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setLanguage(selected);
+    await setLanguage(selected);
     router.push("/dashboard");
   }
 

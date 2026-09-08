@@ -89,7 +89,7 @@ export default function SettingsPage() {
                 <button
                   key={opt.value}
                   type="button"
-                  onClick={() => setLanguage(opt.value)}
+                  onClick={() => void setLanguage(opt.value)}
                   aria-pressed={language === opt.value}
                   className={`rounded-full border px-4 py-1.5 text-sm font-medium transition-colors ${
                     language === opt.value

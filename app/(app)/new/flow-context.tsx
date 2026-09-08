@@ -48,9 +48,13 @@ export function FlowProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     // 마운트 후 저장된 모국어 설정이 있으면 기본 학습 방향으로 반영 (SSR/hydration 안전).
-    const lang = loadNativeLanguage();
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (lang) setDirection(directionForLanguage(lang));
+    let cancelled = false;
+    loadNativeLanguage().then((lang) => {
+      if (!cancelled && lang) setDirection(directionForLanguage(lang));
+    });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   return (
