@@ -1,19 +1,34 @@
 import { POINT_CATEGORIES, type Direction } from "./analysis-schema";
 import type { HistorySession } from "./history";
+import type { NativeLanguage } from "./native-language";
 
 export type PointCategory = (typeof POINT_CATEGORIES)[number];
 
-export const CATEGORY_LABEL: Record<PointCategory, string> = {
-  조사_오용: "조사 오용",
-  경어_레벨_오류: "경어 레벨 오류",
-  어순_문제: "어순 문제",
-  시제_상_오류: "시제·상 오류",
-  활용형_오류: "활용형 오류",
-  조수사_오류: "조수사 오류",
-  어휘_선택_오류: "어휘 선택 오류",
-  생략_보충_오류: "생략·보충 오류",
-  문형_오류: "문형 오류",
-  뉘앙스_오류: "뉘앙스 오류",
+export const CATEGORY_LABEL: Record<NativeLanguage, Record<PointCategory, string>> = {
+  ko: {
+    조사_오용: "조사 오용",
+    경어_레벨_오류: "경어 레벨 오류",
+    어순_문제: "어순 문제",
+    시제_상_오류: "시제·상 오류",
+    활용형_오류: "활용형 오류",
+    조수사_오류: "조수사 오류",
+    어휘_선택_오류: "어휘 선택 오류",
+    생략_보충_오류: "생략·보충 오류",
+    문형_오류: "문형 오류",
+    뉘앙스_오류: "뉘앙스 오류",
+  },
+  ja: {
+    조사_오용: "助詞の誤用",
+    경어_레벨_오류: "敬語レベルの誤り",
+    어순_문제: "語順の問題",
+    시제_상_오류: "時制・相の誤り",
+    활용형_오류: "活用形の誤り",
+    조수사_오류: "助数詞の誤り",
+    어휘_선택_오류: "語彙選択の誤り",
+    생략_보충_오류: "省略・補足の誤り",
+    문형_오류: "文型の誤り",
+    뉘앙스_오류: "ニュアンスの誤り",
+  },
 };
 
 export interface ActivityDay {

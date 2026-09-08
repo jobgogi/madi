@@ -9,6 +9,12 @@ import {
   type Direction,
   type TranslationAnalysisReport,
 } from "@/lib/analysis-schema";
+import type { NativeLanguage } from "@/lib/native-language";
+
+const EXPLANATION_LANG_NAME: Record<NativeLanguage, string> = {
+  ko: "한국어",
+  ja: "일본어",
+};
 
 export type Provider = "claude" | "openai" | "gemini";
 
@@ -67,8 +73,9 @@ export class AnalysisParseError extends Error {
 
 // 방향에 관계없이 AI가 먼저 자체 기준 번역을 만들고, 그 번역을 기준 삼아
 // 사용자 번역과 비교한다 (지시 순서 원칙: 번역 -> 비교 -> 난이도 판정).
-function buildSystemPrompt(direction: Direction): string {
+function buildSystemPrompt(direction: Direction, nativeLanguage: NativeLanguage): string {
   const { source, target } = DIRECTION_LANG[direction];
+  const explanationLang = EXPLANATION_LANG_NAME[nativeLanguage];
   const translateFirstRule = `
 [번역 순서]
 먼저 원문을 자연스러운 ${target}로 직접 번역해 기준 번역(ai_translation)을 만드세요. 그 다음 이 기준 번역을 기준 삼아 사용자의 ${target} 번역과 비교하세요.
@@ -109,11 +116,11 @@ ${readingRule} 필요 없으면 null로 두세요. 너무 쉬운 기초 단어�
 - 지적할 내용이 없으면 grammar_points를 빈 배열로 두세요. 억지로 지적을 만들어내지 마세요.
 - user_expression은 사용자 번역문 안에서 실제로 찾을 수 있는 표현일 때만 채우고, 해당 요소가 통째로 누락된 경우 null로 두세요.
 - suggested_translations는 "정답"이 아니라 참고용 대안 번역입니다. 사용자 번역이 이미 자연스럽다면 비워둬도 됩니다.
-- overall_comment, difficulty.comment 등 서술형 텍스트는 한국어로 설명하되, 그 안에 인용하는 번역 예문 자체는 반드시 ${target}여야 합니다.
+- overall_comment, difficulty.comment, grammar_points[].comment, vocabulary_diff[].meaning 등 서술형 설명 텍스트는 ${explanationLang}로 작성하되, 그 안에 인용하는 번역 예문 자체는 반드시 ${target}여야 합니다.
 - ${difficultyRule}
 
 [언어 규칙 — 절대 어기지 말 것]
-suggested_translations 배열의 모든 항목은 예외 없이 ${target}로만 작성하세요. ${source}로 쓰거나 다른 언어를 섞으면 안 됩니다. 이 규칙은 아래에 문장이 여러 개 주어져도, 몇 번째 문장이든 관계없이 배열의 모든 원소에 동일하게 적용됩니다.
+suggested_translations 배열의 모든 항목은 예외 없이 ${target}로만 작성하세요. ${source}로 쓰거나 다른 언어를 섞으면 안 됩니다. 반대로 overall_comment/difficulty.comment/grammar_points[].comment/vocabulary_diff[].meaning 같은 설명 텍스트는 전부 ${explanationLang}로만 작성하세요 (번역 결과물 언어인 ${target}와 혼동하지 마세요). 이 규칙들은 아래에 문장이 여러 개 주어져도, 몇 번째 문장이든 관계없이 배열의 모든 원소에 동일하게 적용됩니다.
 
 [여러 문장 처리]
 아래에 문장이 번호대로 여러 개 주어집니다. reports 배열에 정확히 같은 개수(N개)를, 주어진 순서 그대로 담아 응답하세요. 문장끼리 서로 영향을 주지 않고 각각 독립적으로 분석하되, 위 [언어 규칙]은 1번째 문장이든 마지막 문장이든 예외 없이 똑같이 지키세요.
@@ -133,19 +140,28 @@ interface RunAnalysisParams {
   // Claude 멀티 워크스페이스 개인 키에서만 필요. anthropic-workspace-id 헤더로 전달된다.
   workspaceId?: string;
   direction: Direction;
+  // 리포트 설명 텍스트(overall_comment 등)를 어느 언어로 쓸지 - 번역
+  // 방향(direction)과는 독립적이다 (사용자가 방향을 수동으로 바꿔도
+  // 설명은 항상 본인 모국어여야 하므로).
+  nativeLanguage: NativeLanguage;
   sentences: SentencePair[];
 }
 
 // 시스템 프롬프트에서 이미 언어 규칙을 명시해도, 문장이 여러 개 배치로
-// 들어가면 뒤쪽 문장으로 갈수록 suggested_translations가 ${source}로
-// 새는 경우가 실제로 관측됐다 - 문장 블록마다 바로 옆에서 다시 한 번
-// 못박아서 항목별로 잊혀지지 않게 한다.
-function buildUserContent(direction: Direction, sentences: SentencePair[]): string {
+// 들어가면 뒤쪽 문장으로 갈수록 suggested_translations/설명 텍스트가
+// 엉뚱한 언어로 새는 경우가 실제로 관측됐다 - 문장 블록마다 바로 옆에서
+// 다시 한 번 못박아서 항목별로 잊혀지지 않게 한다.
+function buildUserContent(
+  direction: Direction,
+  nativeLanguage: NativeLanguage,
+  sentences: SentencePair[],
+): string {
   const { source, target } = DIRECTION_LANG[direction];
+  const explanationLang = EXPLANATION_LANG_NAME[nativeLanguage];
   return sentences
     .map(
       ({ sourceText, userTranslation }, i) =>
-        `[${i + 1}번째 문장]\n[${source} 원문]\n${sourceText}\n\n[사용자의 ${target} 번역]\n${userTranslation}\n(이 문장의 suggested_translations는 반드시 ${target}로만 작성)`,
+        `[${i + 1}번째 문장]\n[${source} 원문]\n${sourceText}\n\n[사용자의 ${target} 번역]\n${userTranslation}\n(이 문장의 suggested_translations는 반드시 ${target}로, comment/meaning 등 설명 텍스트는 반드시 ${explanationLang}로 작성)`,
     )
     .join("\n\n");
 }
@@ -172,11 +188,11 @@ async function runClaudeAnalysis(
     {
       model: params.model || DEFAULT_MODEL.claude,
       max_tokens: 8000,
-      system: buildSystemPrompt(params.direction),
+      system: buildSystemPrompt(params.direction, params.nativeLanguage),
       messages: [
         {
           role: "user",
-          content: buildUserContent(params.direction, params.sentences),
+          content: buildUserContent(params.direction, params.nativeLanguage, params.sentences),
         },
       ],
       output_config: {
@@ -220,10 +236,10 @@ async function runOpenAIAnalysis(
   const completion = await client.chat.completions.create({
     model: params.model || DEFAULT_MODEL.openai,
     messages: [
-      { role: "system", content: buildSystemPrompt(params.direction) },
+      { role: "system", content: buildSystemPrompt(params.direction, params.nativeLanguage) },
       {
         role: "user",
-        content: buildUserContent(params.direction, params.sentences),
+        content: buildUserContent(params.direction, params.nativeLanguage, params.sentences),
       },
     ],
     response_format: {
@@ -250,9 +266,9 @@ async function runGeminiAnalysis(
   const response = await withGeminiRetry(() =>
     client.models.generateContent({
       model: params.model || DEFAULT_MODEL.gemini,
-      contents: buildUserContent(params.direction, params.sentences),
+      contents: buildUserContent(params.direction, params.nativeLanguage, params.sentences),
       config: {
-        systemInstruction: buildSystemPrompt(params.direction),
+        systemInstruction: buildSystemPrompt(params.direction, params.nativeLanguage),
         responseMimeType: "application/json",
         responseJsonSchema: toResponseJsonSchema(),
       },

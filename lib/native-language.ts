@@ -47,3 +47,20 @@ export async function saveNativeLanguage(lang: NativeLanguage): Promise<void> {
 export function directionForLanguage(lang: NativeLanguage): Direction {
   return lang === "ko" ? "ja_to_ko" : "ko_to_ja";
 }
+
+// DB에 저장된 native_language가 아직 없을 때(로딩 중이거나 온보딩 전)
+// 무조건 한국어로 보여주는 대신 쓰는 최선 추정치 - 브라우저 언어 설정
+// 기준. SSR에는 navigator가 없으므로 클라이언트 마운트 후에만 의미있다.
+export function detectBrowserLanguage(): NativeLanguage {
+  if (typeof navigator === "undefined") return "ko";
+  return navigator.language.toLowerCase().startsWith("ja") ? "ja" : "ko";
+}
+
+// 로그인 전(랜딩/로그인 화면)은 native_language도 없고 클라이언트
+// 컴포넌트가 아니라 navigator도 못 쓴다 - Server Component에서 요청의
+// Accept-Language 헤더로 같은 추정을 한다.
+export function detectAcceptLanguage(acceptLanguage: string | null): NativeLanguage {
+  if (!acceptLanguage) return "ko";
+  const first = acceptLanguage.split(",")[0]?.trim().toLowerCase() ?? "";
+  return first.startsWith("ja") ? "ja" : "ko";
+}

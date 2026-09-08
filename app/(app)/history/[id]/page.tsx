@@ -9,6 +9,10 @@ import { SEVERITY_LABEL, SEVERITY_ORDER, SEVERITY_STYLE } from "@/lib/severity-s
 import { aggregateSeverityCounts, compareSessions } from "@/lib/session-summary";
 import { useHistorySession } from "@/lib/hooks/useHistorySession";
 import { useSessionFeedback } from "@/lib/hooks/useSessionFeedback";
+import { useLocale } from "@/lib/hooks/useLocale";
+import { history } from "@/lib/i18n/history";
+import { CATEGORY_LABEL, type PointCategory } from "@/lib/dashboard-stats";
+import type { NativeLanguage } from "@/lib/native-language";
 import { TranslationComparison } from "@/components/TranslationComparison";
 import {
   PrinterIcon,
@@ -25,13 +29,8 @@ const PROVIDER_LABEL: Record<HistorySession["provider"], string> = {
   gemini: "Gemini",
 };
 
-const DIRECTION_BADGE: Record<HistorySession["direction"], string> = {
-  ja_to_ko: "일→한",
-  ko_to_ja: "한→일",
-};
-
-function formatDate(ts: number): string {
-  return new Date(ts).toLocaleString("ko-KR", {
+function formatDate(ts: number, locale: NativeLanguage): string {
+  return new Date(ts).toLocaleString(locale === "ja" ? "ja-JP" : "ko-KR", {
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
@@ -68,6 +67,8 @@ function PointCard({
   point: GrammarPoint;
   sentenceLabel: string | null;
 }) {
+  const locale = useLocale();
+  const t = history[locale];
   const isCritical = point.severity === "critical";
   return (
     <li
@@ -79,24 +80,24 @@ function PointCard({
     >
       <div className="mb-2 flex flex-wrap items-center gap-2">
         <span className="rounded-full bg-zinc-900 px-2.5 py-0.5 text-xs font-medium text-white">
-          {point.category.replace(/_/g, " ")}
+          {CATEGORY_LABEL[locale][point.category]}
         </span>
         <span
           className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${SEVERITY_STYLE[point.severity]}`}
         >
-          {SEVERITY_LABEL[point.severity]}
+          {SEVERITY_LABEL[locale][point.severity]}
         </span>
         {sentenceLabel && (
           <span className="text-xs text-zinc-400">{sentenceLabel}</span>
         )}
       </div>
       <p className="text-sm text-zinc-700">
-        <span className="font-medium text-zinc-900">원문:</span>{" "}
+        <span className="font-medium text-zinc-900">{t.sourceLabel}</span>{" "}
         {point.source_expression}
         {point.user_expression && (
           <>
             {" "}
-            <span className="font-medium text-zinc-900">번역:</span>{" "}
+            <span className="font-medium text-zinc-900">{t.translationLabel}</span>{" "}
             {point.user_expression}
           </>
         )}
@@ -104,7 +105,7 @@ function PointCard({
       <p className="mt-2 text-sm text-zinc-600">{point.comment}</p>
       {point.suggestion && (
         <p className="mt-2 text-sm text-emerald-700">
-          제안: {point.suggestion}
+          {t.suggestionPrefix}{point.suggestion}
         </p>
       )}
     </li>
@@ -117,6 +118,8 @@ export default function SessionReportPage() {
 
   const { session, previous } = useHistorySession(params.id);
   const { feedback, setFeedback } = useSessionFeedback(session?.id ?? null);
+  const locale = useLocale();
+  const t = history[locale];
 
   if (session === undefined) return null;
 
@@ -125,10 +128,10 @@ export default function SessionReportPage() {
       <div className="flex flex-1 justify-center bg-zinc-50 px-4 py-10">
         <main className="flex w-full max-w-2xl flex-col gap-4">
           <p className="text-sm text-zinc-500">
-            해당 기록을 찾을 수 없습니다.
+            {t.notFound}
           </p>
           <Link href="/dashboard" className="text-sm underline">
-            대시보드로 돌아가기
+            {t.backToDashboardLong}
           </Link>
         </main>
       </div>
@@ -153,7 +156,7 @@ export default function SessionReportPage() {
 
   async function handleDeleteSession() {
     if (!session) return;
-    if (!window.confirm("이 기록을 삭제할까요?")) return;
+    if (!window.confirm(t.confirmDelete)) return;
     await deleteSession(session.id);
     router.push("/history");
   }
@@ -167,20 +170,20 @@ export default function SessionReportPage() {
               href="/dashboard"
               className="text-sm text-zinc-600 hover:text-zinc-900 hover:underline print:hidden"
             >
-              ← 대시보드로
+              {t.backToDashboard}
             </Link>
             <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
               <span className="rounded-full bg-blue-100 px-2 py-0.5 font-medium text-blue-800">
-                {DIRECTION_BADGE[session.direction]}
+                {t.directionBadge[session.direction]}
               </span>
               <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-zinc-600">
                 {PROVIDER_LABEL[session.provider]}
               </span>
               <span className="text-zinc-400">
-                {formatDate(session.createdAt)}
+                {formatDate(session.createdAt, locale)}
               </span>
               {total > 1 && (
-                <span className="text-zinc-400">· 총 {total}개 문장</span>
+                <span className="text-zinc-400">{t.totalSentences(total)}</span>
               )}
             </div>
           </div>
@@ -188,7 +191,7 @@ export default function SessionReportPage() {
             <button
               type="button"
               onClick={() => setFeedback("good")}
-              aria-label="도움이 됐어요"
+              aria-label={t.feedbackGood}
               aria-pressed={feedback === "good"}
               className={`flex items-center gap-1.5 text-sm ${
                 feedback === "good" ? "text-emerald-600" : "text-zinc-500 hover:text-zinc-900"
@@ -199,7 +202,7 @@ export default function SessionReportPage() {
             <button
               type="button"
               onClick={() => setFeedback("bad")}
-              aria-label="아쉬웠어요"
+              aria-label={t.feedbackBad}
               aria-pressed={feedback === "bad"}
               className={`flex items-center gap-1.5 text-sm ${
                 feedback === "bad" ? "text-red-600" : "text-zinc-500 hover:text-zinc-900"
@@ -210,25 +213,25 @@ export default function SessionReportPage() {
             <button
               type="button"
               onClick={() => window.print()}
-              aria-label="리포트 인쇄"
+              aria-label={t.print}
               className="flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-900"
             >
-              <PrinterIcon className="h-4 w-4" /> 인쇄
+              <PrinterIcon className="h-4 w-4" /> {t.print}
             </button>
             <button
               type="button"
-              aria-label="이 기록 삭제"
+              aria-label={t.deleteRecord}
               onClick={handleDeleteSession}
               className="text-sm text-zinc-500 hover:text-red-600"
             >
-              기록 삭제
+              {t.deleteRecord}
             </button>
           </div>
         </header>
 
         <section>
           <h2 className="mb-2 text-sm font-semibold text-zinc-900">
-            전체 원문
+            {t.fullSourceTitle}
           </h2>
           <p className="rounded-lg border border-zinc-200 bg-white p-4 text-sm leading-relaxed text-zinc-800">
             {fullSourceText}
@@ -237,7 +240,7 @@ export default function SessionReportPage() {
 
         <section>
           <h2 className="mb-2 text-sm font-semibold text-zinc-900">
-            내 번역 vs AI 번역
+            {t.comparisonTitle}
           </h2>
           <ul className="flex flex-col gap-3">
             {session.sentences.map((sentence, i) => {
@@ -249,24 +252,26 @@ export default function SessionReportPage() {
                 >
                   {total > 1 && (
                     <p className="mb-1.5 text-xs font-medium text-zinc-400">
-                      {i + 1}번째 문장
+                      {t.nthSentence(i + 1)}
                     </p>
                   )}
                   {aiTranslation ? (
                     <TranslationComparison
+                      baseLabel={t.myTranslation}
                       base={sentence.userTranslation}
+                      altLabel={t.aiSuggestion}
                       alternative={aiTranslation}
                     />
                   ) : (
                     <p className="text-sm text-zinc-700">
                       {sentence.userTranslation}
                       <span className="ml-2 text-xs text-zinc-400">
-                        (AI가 이미 자연스럽다고 판단했습니다)
+                        {t.alreadyNatural}
                       </span>
                     </p>
                   )}
                   <p className="mt-2 text-xs text-zinc-500">
-                    총평: {sentence.report.overall_comment}
+                    {t.overallCommentPrefix}{sentence.report.overall_comment}
                   </p>
                 </li>
               );
@@ -276,11 +281,11 @@ export default function SessionReportPage() {
 
         <section>
           <h2 className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-zinc-900">
-            <StarIcon className="h-4 w-4" /> 가장 잘한 점
+            <StarIcon className="h-4 w-4" /> {t.strengthsTitle}
           </h2>
           {allStrengths.length === 0 ? (
             <p className="text-sm text-zinc-500">
-              이번엔 특별히 강조할 점을 찾지 못했습니다.
+              {t.noStrengths}
             </p>
           ) : (
             <div className="rounded-lg border border-emerald-300 bg-emerald-50/50 p-3">
@@ -290,7 +295,7 @@ export default function SessionReportPage() {
                     {text}
                     {total > 1 && (
                       <span className="ml-2 text-xs text-emerald-600/70">
-                        ({sentenceIndex + 1}번째 문장)
+                        ({t.nthSentence(sentenceIndex + 1)})
                       </span>
                     )}
                   </li>
@@ -302,19 +307,19 @@ export default function SessionReportPage() {
 
         <section className="rounded-lg border border-red-300 bg-red-50/40 p-3">
           <h2 className="mb-2 flex flex-wrap items-center gap-2 text-sm font-semibold text-zinc-900">
-            <WarningTriangleIcon className="h-4 w-4" /> 아쉬운 점
+            <WarningTriangleIcon className="h-4 w-4" /> {t.weakPointsTitle}
             {(["critical", "warning", "info"] as const).map((severity) => (
               <span
                 key={severity}
                 className={`rounded-full px-2 py-0.5 text-xs font-medium ${SEVERITY_STYLE[severity]}`}
               >
-                {SEVERITY_LABEL[severity]} {severityCounts[severity]}
+                {SEVERITY_LABEL[locale][severity]} {severityCounts[severity]}
               </span>
             ))}
           </h2>
           {allPoints.length === 0 ? (
             <p className="text-sm text-zinc-500">
-              특별히 짚을 만한 지적 사항이 없습니다.
+              {t.noWeakPoints}
             </p>
           ) : (
             <ul className="flex flex-col gap-3">
@@ -322,7 +327,7 @@ export default function SessionReportPage() {
                 <PointCard
                   key={i}
                   point={point}
-                  sentenceLabel={total > 1 ? `${sentenceIndex + 1}번째 문장` : null}
+                  sentenceLabel={total > 1 ? t.nthSentence(sentenceIndex + 1) : null}
                 />
               ))}
             </ul>
@@ -331,40 +336,46 @@ export default function SessionReportPage() {
 
         <section>
           <h2 className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-zinc-900">
-            <TrendingUpIcon className="h-4 w-4" /> 이전 세션 대비 나아진 점
+            <TrendingUpIcon className="h-4 w-4" /> {t.progressTitle}
           </h2>
           {!comparison ? (
             <p className="text-sm text-zinc-500">
-              첫 연습 기록이라 비교할 이전 기록이 없습니다.
+              {t.noPrevious}
             </p>
           ) : (
             <ul className="flex flex-col gap-1.5 rounded-lg border-2 border-zinc-900 p-3 text-sm text-zinc-700">
               <li>
-                심각 오류: {severityCounts.critical - comparison.criticalDelta}건 →{" "}
-                {severityCounts.critical}건
+                {t.criticalCountLine(
+                  severityCounts.critical - comparison.criticalDelta,
+                  severityCounts.critical,
+                )}
                 {comparison.criticalDelta < 0 && (
-                  <span className="ml-1 text-emerald-600">개선됨</span>
+                  <span className="ml-1 text-emerald-600">{t.improved}</span>
                 )}
               </li>
               <li>
-                경고: {severityCounts.warning - comparison.warningDelta}건 →{" "}
-                {severityCounts.warning}건
+                {t.warningCountLine(
+                  severityCounts.warning - comparison.warningDelta,
+                  severityCounts.warning,
+                )}
                 {comparison.warningDelta < 0 && (
-                  <span className="ml-1 text-emerald-600">개선됨</span>
+                  <span className="ml-1 text-emerald-600">{t.improved}</span>
                 )}
               </li>
               {comparison.resolvedCategories.length > 0 && (
                 <li>
-                  지난번 지적됐던{" "}
-                  {comparison.resolvedCategories.map((c) => c.replace(/_/g, " ")).join(", ")}{" "}
-                  문제가 이번엔 나오지 않았습니다.
+                  {t.resolvedCategories(
+                    comparison.resolvedCategories
+                      .map((c) => CATEGORY_LABEL[locale][c as PointCategory])
+                      .join(", "),
+                  )}
                 </li>
               )}
               {comparison.criticalDelta >= 0 &&
                 comparison.warningDelta >= 0 &&
                 comparison.resolvedCategories.length === 0 && (
                   <li className="text-zinc-500">
-                    지난 세션과 비슷한 수준입니다.
+                    {t.similarToPrevious}
                   </li>
                 )}
             </ul>
@@ -374,7 +385,7 @@ export default function SessionReportPage() {
         {allVocabulary.length > 0 && (
           <section>
             <h2 className="mb-2 text-sm font-semibold text-zinc-900">
-              핵심 단어
+              {t.vocabularyTitle}
             </h2>
             <ul className="flex flex-col gap-2">
               {allVocabulary.map((item, i) => (
@@ -387,10 +398,10 @@ export default function SessionReportPage() {
         <button
           type="button"
           onClick={() => router.push("/dashboard")}
-          aria-label="완료하고 대시보드로 이동"
+          aria-label={t.doneAria}
           className="self-start rounded-full bg-zinc-900 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-700 print:hidden"
         >
-          완료
+          {t.done}
         </button>
       </main>
     </div>

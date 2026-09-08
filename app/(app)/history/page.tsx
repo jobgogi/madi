@@ -7,11 +7,15 @@ import { JLPT_STYLE } from "@/lib/jlpt-style";
 import { CATEGORY_LABEL, filterSessionsByCategory } from "@/lib/dashboard-stats";
 import { useSessions } from "@/lib/hooks/useSessions";
 import { useCategoryFilterFromQuery } from "@/lib/hooks/useCategoryFilterFromQuery";
+import { useLocale } from "@/lib/hooks/useLocale";
+import { history } from "@/lib/i18n/history";
 import { SessionCard } from "@/components/SessionCard";
 
 export default function HistoryPage() {
   const [sessions, setSessions] = useSessions();
   const categoryFilter = useCategoryFilterFromQuery();
+  const locale = useLocale();
+  const t = history[locale];
 
   const visibleSessions = categoryFilter
     ? filterSessionsByCategory(sessions ?? [], categoryFilter)
@@ -23,7 +27,7 @@ export default function HistoryPage() {
   }
 
   async function handleClearAll() {
-    if (!window.confirm("저장된 분석 기록을 모두 삭제할까요?")) return;
+    if (!window.confirm(t.confirmClearAll)) return;
     await clearHistory();
     setSessions([]);
   }
@@ -56,13 +60,13 @@ export default function HistoryPage() {
               href="/dashboard"
               className="text-sm text-zinc-600 hover:text-zinc-900 hover:underline"
             >
-              ← 대시보드로
+              {t.backToDashboard}
             </Link>
             <h1 className="mt-2 text-xl font-semibold text-zinc-900">
-              전체 기록
+              {t.title}
             </h1>
             <p className="mt-1 text-sm text-zinc-500">
-              지금까지 분석한 기록을 난이도(JLPT 등급)별로 모아서 보여줍니다.
+              {t.subtitle}
             </p>
           </div>
           {sessions !== null && sessions.length > 0 && (
@@ -71,16 +75,16 @@ export default function HistoryPage() {
               onClick={handleClearAll}
               className="shrink-0 text-sm text-zinc-600 hover:text-red-600"
             >
-              전체 삭제
+              {t.clearAll}
             </button>
           )}
         </header>
 
         {categoryFilter && (
           <div className="flex items-center gap-2 rounded-lg bg-zinc-100 px-3 py-2 text-sm text-zinc-700">
-            <span>카테고리 필터: {CATEGORY_LABEL[categoryFilter]}</span>
+            <span>{t.categoryFilterLabel(CATEGORY_LABEL[locale][categoryFilter])}</span>
             <Link href="/history" className="text-zinc-600 underline hover:text-zinc-900">
-              해제
+              {t.clearFilter}
             </Link>
           </div>
         )}
@@ -88,12 +92,12 @@ export default function HistoryPage() {
         {visibleSessions !== null && visibleSessions.length === 0 && (
           <p className="rounded-lg border border-dashed border-zinc-300 p-6 text-center text-sm text-zinc-500">
             {categoryFilter ? (
-              "이 카테고리에 해당하는 기록이 없습니다."
+              t.emptyForCategory
             ) : (
               <>
-                아직 저장된 분석 기록이 없습니다.{" "}
+                {t.emptyAll}{" "}
                 <Link href="/new" className="underline">
-                  번역을 분석해보세요
+                  {t.tryAnalyze}
                 </Link>
                 .
               </>
@@ -110,7 +114,7 @@ export default function HistoryPage() {
                 >
                   {level}
                 </span>
-                {grouped[level].length}건
+                {t.countSuffix(grouped[level].length)}
               </h2>
               <ul className="flex flex-col gap-2">
                 {grouped[level].map(({ session, headline }) => (
