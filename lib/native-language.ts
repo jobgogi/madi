@@ -1,26 +1,45 @@
 import type { Direction } from "@/lib/analysis-schema";
+import { createClient } from "@/lib/supabase/client";
 
 export type NativeLanguage = "ko" | "ja";
-
-const STORAGE_KEY = "madi:native-language";
 
 function isNativeLanguage(value: unknown): value is NativeLanguage {
   return value === "ko" || value === "ja";
 }
 
-export function loadNativeLanguage(): NativeLanguage | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    return isNativeLanguage(raw) ? raw : null;
-  } catch {
+export async function loadNativeLanguage(): Promise<NativeLanguage | null> {
+  const supabase = createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("native_language")
+    .eq("id", user.id)
+    .maybeSingle();
+  if (error || !data) {
+    if (error) console.error("loadNativeLanguage failed", error);
     return null;
   }
+  return isNativeLanguage(data.native_language) ? data.native_language : null;
 }
 
-export function saveNativeLanguage(lang: NativeLanguage): void {
-  if (typeof window === "undefined") return;
-  window.localStorage.setItem(STORAGE_KEY, lang);
+export async function saveNativeLanguage(lang: NativeLanguage): Promise<void> {
+  const supabase = createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return;
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({ native_language: lang })
+    .eq("id", user.id);
+
+  if (error) console.error("saveNativeLanguage failed", error);
 }
 
 // 모국어에 따른 기본 학습 방향 - 한국어 화자는 일본어를 한국어로,
