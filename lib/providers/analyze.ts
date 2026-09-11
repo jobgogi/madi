@@ -10,6 +10,9 @@ import {
   type TranslationAnalysisReport,
 } from "@/lib/analysis-schema";
 import type { NativeLanguage } from "@/lib/native-language";
+import { LOCKED_PROMPT_RULES } from "@/lib/prompt-rules";
+
+export { LOCKED_PROMPT_RULES };
 
 const EXPLANATION_LANG_NAME: Record<NativeLanguage, string> = {
   ko: "한국어",
@@ -71,62 +74,16 @@ export class AnalysisParseError extends Error {
   }
 }
 
-// 방향에 관계없이 AI가 먼저 자체 기준 번역을 만들고, 그 번역을 기준 삼아
-// 사용자 번역과 비교한다 (지시 순서 원칙: 번역 -> 비교 -> 난이도 판정).
-function buildSystemPrompt(direction: Direction, nativeLanguage: NativeLanguage): string {
-  const { source, target } = DIRECTION_LANG[direction];
-  const explanationLang = EXPLANATION_LANG_NAME[nativeLanguage];
-  const translateFirstRule = `
-[번역 순서]
-먼저 원문을 자연스러운 ${target}로 직접 번역해 기준 번역(ai_translation)을 만드세요. 그 다음 이 기준 번역을 기준 삼아 사용자의 ${target} 번역과 비교하세요.
-`;
-  const readingRule =
-    direction === "ja_to_ko"
-      ? "각 단어에는 reading(한자 읽기/요미가나, 히라가나 표기)을 병기하세요."
-      : "각 단어에는 reading(한국어 단어의 일본어식 발음을 외래어 표기법 기준 가타카나로 표기)을 병기하세요. 가타카나 표기는 일관된 규칙을 따르세요.";
-  const difficultyRule =
-    direction === "ja_to_ko"
-      ? "difficulty.level은 원문(일본어) 전체의 JLPT 기준 대략적인 난이도(N5~N1)를 판단하고, comment에 그 이유를 간단히 설명하세요."
-      : "difficulty.level은 원문이 아니라 당신이 만든 기준 번역(최종 일본어 결과물) 전체의 JLPT 기준 대략적인 난이도(N5~N1)를 판단하고, comment에 그 이유를 간단히 설명하세요.";
-
-  return `당신은 ${source}->${target} 번역 학습을 돕는 코치입니다.
-사용자가 제시한 ${source} 원문과 그 사람이 직접 작성한 ${target} 번역을 비교 분석하세요.
-${translateFirstRule}
-[최우선 규칙: 의미 왜곡 우선 감지]
-다른 무엇보다 먼저, 사용자 번역이 원문의 의미를 반대로 바꾸거나(부정어 누락/추가 등) 핵심 사실 관계를 왜곡하는 부분이 있는지 검사하세요. 이런 오류를 발견하면 severity를 반드시 "critical"로 표시하고, grammar_points 배열의 가장 첫 번째 항목으로 배치하세요. 문장이 아무리 자연스럽게 읽혀도 의미 왜곡은 반드시 지적해야 합니다.
-
-[카테고리 규칙]
-grammar_points의 category는 반드시 다음 10개 중 하나만 사용하세요. 목록에 없는 이름을 새로 만들지 마세요.
-조사_오용 / 경어_레벨_오류 / 어순_문제 / 시제_상_오류 / 활용형_오류 / 조수사_오류 / 어휘_선택_오류 / 생략_보충_오류 / 문형_오류 / 뉘앙스_오류
-
-[severity 판정 기준] (임의로 판단하지 말고 이 기준을 그대로 따르세요)
-- critical: 원문과 반대되거나 다른 의미로 읽히는 경우 (부정어 누락, 주체/객체 반전 등)
-- warning: 문법적으로 틀렸거나 문서 전체의 어조·시제 일관성을 깨는 경우
-- info: 문법은 맞지만 더 자연스러운 표현이 있는 경우 (직역투, 어휘 선택 개선 등)
-
-[vocabulary_diff 선정 기준]
-1순위: 사용자가 오역하거나 잘못 사용한 단어. 2순위(1순위로 채워지지 않을 때): 원문에서 난이도가 높은 핵심 전문용어.
-word는 반드시 원문(${source}) 표현이어야 합니다 — 당신이 만든 ${target} 번역 결과물 쪽 단어를 넣으면 안 됩니다(예: ko_to_ja처럼 원문이 한국어면 word도 한국어 단어여야 하고, 일본어 번역 단어를 넣으면 안 됩니다).
-${readingRule} 필요 없으면 null로 두세요. 너무 쉬운 기초 단어는 제외하고, 억지로 채우지 말고 정말 유의미한 단어만 고르세요 (없으면 빈 배열도 가능).
-
-[strengths 선정 기준]
-사용자 번역에서 특히 잘한 부분(자연스러운 표현, 원문 뉘앙스를 정확히 살린 어휘 선택 등)을 1~3개 뽑으세요. 칭찬거리를 억지로 만들어내지 말고, 정말 잘한 부분이 없으면 빈 배열로 두세요.
-
-[기타 원칙]
-- critical에 해당하지 않는 이상, 번역에는 정답이 여러 개 있을 수 있으므로 "틀렸다"고 단정하지 말고 원문 뉘앙스와의 차이를 설명하는 방식으로 코멘트하세요.
-- 지적할 내용이 없으면 grammar_points를 빈 배열로 두세요. 억지로 지적을 만들어내지 마세요.
-- user_expression은 사용자 번역문 안에서 실제로 찾을 수 있는 표현일 때만 채우고, 해당 요소가 통째로 누락된 경우 null로 두세요.
-- suggested_translations는 "정답"이 아니라 참고용 대안 번역입니다. 사용자 번역이 이미 자연스럽다면 비워둬도 됩니다.
-- overall_comment, difficulty.comment, grammar_points[].comment, vocabulary_diff[].meaning 등 서술형 설명 텍스트는 ${explanationLang}로 작성하되, 그 안에 인용하는 번역 예문 자체는 반드시 ${target}여야 합니다.
-- ${difficultyRule}
-
-[언어 규칙 — 절대 어기지 말 것]
-suggested_translations 배열의 모든 항목은 예외 없이 ${target}로만 작성하세요. ${source}로 쓰거나 다른 언어를 섞으면 안 됩니다. 반대로 overall_comment/difficulty.comment/grammar_points[].comment/vocabulary_diff[].meaning 같은 설명 텍스트는 전부 ${explanationLang}로만 작성하세요 (번역 결과물 언어인 ${target}와 혼동하지 마세요). 이 규칙들은 아래에 문장이 여러 개 주어져도, 몇 번째 문장이든 관계없이 배열의 모든 원소에 동일하게 적용됩니다.
-
-[여러 문장 처리]
-아래에 문장이 번호대로 여러 개 주어집니다. reports 배열에 정확히 같은 개수(N개)를, 주어진 순서 그대로 담아 응답하세요. 문장끼리 서로 영향을 주지 않고 각각 독립적으로 분석하되, 위 [언어 규칙]은 1번째 문장이든 마지막 문장이든 예외 없이 똑같이 지키세요.
-
-정의된 JSON 스키마 형식으로만 응답하고, 다른 설명 텍스트를 앞뒤에 붙이지 마세요.`;
+// 시스템 프롬프트 본문(편집 가능 부분)은 prompt_templates DB 테이블(방향별 활성
+// 버전)이 유일 소스. 방향에 따라 달라지는 표현(언어명, reading 규칙 등)은 이미
+// 방향별 행에 고정 텍스트로 들어있고, 사용자 모국어에 따라서만 달라지는 부분만
+// {{explanationLang}} 플레이스홀더로 남겨뒀으므로 요청 시점에 치환한다. 그 뒤에
+// LOCKED_PROMPT_RULES를 항상 덧붙여서 관리자 입력 내용과 무관하게 구조적 제약이
+// 보장되게 한다. 관리자 화면(app/admin/prompt-templates)과 API 라우트
+// (app/api/analyze, app/api/admin/prompt-preview) 양쪽에서 호출.
+export function resolvePromptTemplate(content: string, nativeLanguage: NativeLanguage): string {
+  const resolved = content.split("{{explanationLang}}").join(EXPLANATION_LANG_NAME[nativeLanguage]);
+  return `${resolved}\n\n${LOCKED_PROMPT_RULES}`;
 }
 
 interface SentencePair {
@@ -145,6 +102,10 @@ interface RunAnalysisParams {
   // 방향(direction)과는 독립적이다 (사용자가 방향을 수동으로 바꿔도
   // 설명은 항상 본인 모국어여야 하므로).
   nativeLanguage: NativeLanguage;
+  // prompt_templates(direction별 활성 버전)의 content 원문. {{explanationLang}}
+  // 플레이스홀더는 이 함수 내부에서 resolvePromptTemplate()로 치환한다.
+  // 호출자(app/api/analyze, app/api/admin/prompt-preview)가 DB/초안에서 가져와 전달.
+  systemPromptTemplate: string;
   sentences: SentencePair[];
 }
 
@@ -189,7 +150,7 @@ async function runClaudeAnalysis(
     {
       model: params.model || DEFAULT_MODEL.claude,
       max_tokens: 8000,
-      system: buildSystemPrompt(params.direction, params.nativeLanguage),
+      system: resolvePromptTemplate(params.systemPromptTemplate, params.nativeLanguage),
       messages: [
         {
           role: "user",
@@ -237,7 +198,7 @@ async function runOpenAIAnalysis(
   const completion = await client.chat.completions.create({
     model: params.model || DEFAULT_MODEL.openai,
     messages: [
-      { role: "system", content: buildSystemPrompt(params.direction, params.nativeLanguage) },
+      { role: "system", content: resolvePromptTemplate(params.systemPromptTemplate, params.nativeLanguage) },
       {
         role: "user",
         content: buildUserContent(params.direction, params.nativeLanguage, params.sentences),
@@ -269,7 +230,7 @@ async function runGeminiAnalysis(
       model: params.model || DEFAULT_MODEL.gemini,
       contents: buildUserContent(params.direction, params.nativeLanguage, params.sentences),
       config: {
-        systemInstruction: buildSystemPrompt(params.direction, params.nativeLanguage),
+        systemInstruction: resolvePromptTemplate(params.systemPromptTemplate, params.nativeLanguage),
         responseMimeType: "application/json",
         responseJsonSchema: toResponseJsonSchema(),
       },
