@@ -19,6 +19,13 @@ const EXPLANATION_LANG_NAME: Record<NativeLanguage, string> = {
   ja: "일본어",
 };
 
+// "학습 대상 언어" - 모국어의 반대쪽 언어. word/difficulty/reading 안내가 전부
+// 이 값을 기준으로 결정된다 (direction이 아니라 모국어가 1차 기준).
+const FOREIGN_LANG_NAME: Record<NativeLanguage, string> = {
+  ko: "일본어",
+  ja: "한국어",
+};
+
 export type Provider = "claude" | "openai" | "gemini";
 
 const DEFAULT_MODEL: Record<Provider, string> = {
@@ -74,11 +81,17 @@ export class AnalysisParseError extends Error {
   }
 }
 
-// vocabulary_diff[].reading 안내 - 사용자 모국어에 따라 어느 표기(가타카나/
-// 후리가나)로 읽는 법을 병기할지 정한다. direction을 수동으로 뒤집어 원문
-// 언어가 자기 모국어와 같아지는 경우(예: 모국어 한국어인 사용자가 ko_to_ja
-// 선택)는 흔치 않은 사용 패턴으로 보고 단순화를 위해 다루지 않는다 - 항상
-// 모국어 기준으로만 판단.
+// vocabulary_diff[].word가 어느 언어여야 하는지 - 항상 학습 대상 언어(모국어의
+// 반대쪽)여야 한다. direction의 원문/번역 어느 쪽이든, 모국어와 같은 언어는
+// 이미 아는 언어라 단어로 뽑을 이유가 없다.
+function buildVocabularyLanguageGuidance(nativeLanguage: NativeLanguage): string {
+  const foreign = FOREIGN_LANG_NAME[nativeLanguage];
+  const native = EXPLANATION_LANG_NAME[nativeLanguage];
+  return `word는 반드시 ${foreign} 표현이어야 합니다 — 모국어(${native}) 단어나 당신이 만든 ${native} 번역 결과물 쪽 단어를 넣으면 안 됩니다.`;
+}
+
+// vocabulary_diff[].reading 안내 - 학습 대상 언어(모국어의 반대쪽) 단어를
+// 모국어 화자가 읽을 수 있는 표기(가타카나/후리가나)로 병기한다.
 function buildReadingGuidance(nativeLanguage: NativeLanguage): string {
   if (nativeLanguage === "ja") {
     return "각 단어에는 reading을 병기하세요. 한자어라도 대응하는 일본어 한자어의 음독으로 바꾸지 말고, 한글 그대로의 한국어 발음을 가타카나로 최대한 가깝게 표기하세요(사용자가 한글 읽는 법 자체를 익히는 것이 목적입니다). 필요 없으면 null로 두세요.";
@@ -86,21 +99,34 @@ function buildReadingGuidance(nativeLanguage: NativeLanguage): string {
   return "각 단어에는 reading(한자 요미가나, 히라가나 표기)을 병기하세요. 필요 없으면 null로 두세요.";
 }
 
+// difficulty.level 판정 대상과 척도 - 학습 대상 언어(모국어의 반대쪽) 기준.
+// 일본어면 JLPT, 한국어면 TOPIK. 원문/기준 번역 중 그 언어로 쓰인 쪽을 보면
+// 된다 (direction에 따라 어느 쪽인지는 달라도 상관없음).
+function buildDifficultyGuidance(nativeLanguage: NativeLanguage): string {
+  if (nativeLanguage === "ja") {
+    return "difficulty.level은 한국어로 된 자료(원문 또는 당신이 만든 기준 번역 중 한국어인 쪽) 전체의 TOPIK 기준 대략적인 난이도(1급=쉬움~6급=어려움)를 판단하고, comment에 그 이유를 간단히 설명하세요.";
+  }
+  return "difficulty.level은 일본어로 된 자료(원문 또는 당신이 만든 기준 번역 중 일본어인 쪽) 전체의 JLPT 기준 대략적인 난이도(N5=쉬움~N1=어려움)를 판단하고, comment에 그 이유를 간단히 설명하세요.";
+}
+
 // 시스템 프롬프트 본문(편집 가능 부분)은 prompt_templates DB 테이블(방향별 활성
-// 버전)이 유일 소스. 방향에 따라서만 달라지는 고정 표현(언어명 등)은 이미
-// 방향별 행에 고정 텍스트로 들어있다. 사용자 모국어에 따라 달라지는 부분은
-// {{explanationLang}}과 {{readingGuidance}} 플레이스홀더로 남겨뒀으므로 요청
-// 시점에 치환한다. 그 뒤에 LOCKED_PROMPT_RULES를 항상 덧붙여서 관리자 입력
-// 내용과 무관하게 구조적 제약이 보장되게 한다. 관리자 화면
-// (app/admin/prompt-templates)과 API 라우트(app/api/analyze,
-// app/api/admin/prompt-preview) 양쪽에서 호출.
+// 버전)이 유일 소스. direction에 따라서만 달라지는 고정 표현(원문/번역 방향
+// 설명 등)은 방향별 행에 고정 텍스트로 들어있다. 모국어에 따라 달라지는
+// 부분(설명 언어, 학습 대상 언어의 단어/난이도/읽는 법)은 각각
+// {{explanationLang}}/{{vocabularyLanguage}}/{{difficultyGuidance}}/
+// {{readingGuidance}} 플레이스홀더로 남겨뒀으므로 요청 시점에 치환한다 - 이
+// 넷은 모두 "모국어가 무엇인가"만 보고 정해진다(direction을 보지 않음). 그
+// 뒤에 LOCKED_PROMPT_RULES를 항상 덧붙여서 관리자 입력 내용과 무관하게
+// 구조적 제약이 보장되게 한다. 관리자 화면(app/admin/prompt-templates)과 API
+// 라우트(app/api/analyze, app/api/admin/prompt-preview) 양쪽에서 호출.
 export function resolvePromptTemplate(content: string, nativeLanguage: NativeLanguage): string {
-
-  console.log(nativeLanguage);
-
   const resolved = content
     .split("{{explanationLang}}")
     .join(EXPLANATION_LANG_NAME[nativeLanguage])
+    .split("{{vocabularyLanguage}}")
+    .join(buildVocabularyLanguageGuidance(nativeLanguage))
+    .split("{{difficultyGuidance}}")
+    .join(buildDifficultyGuidance(nativeLanguage))
     .split("{{readingGuidance}}")
     .join(buildReadingGuidance(nativeLanguage));
   return `${resolved}\n\n${LOCKED_PROMPT_RULES}`;
