@@ -1,4 +1,5 @@
 import { POINT_CATEGORIES, type Direction } from "./analysis-schema";
+import { localDateKey } from "./date-key";
 import type { HistorySession } from "./history";
 import type { NativeLanguage } from "./native-language";
 
@@ -36,13 +37,6 @@ export interface ActivityDay {
   count: number;
   level: 0 | 1 | 2 | 3 | 4;
   future: boolean;
-}
-
-function localDateKey(d: Date): string {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
 }
 
 function levelFor(count: number): ActivityDay["level"] {

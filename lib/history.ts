@@ -16,6 +16,10 @@ export interface HistorySession {
   provider: Provider;
   direction: Direction;
   sentences: SentenceResult[];
+  // 리포트 상세 화면(getSession)에서만 채워짐 - 목록(loadSessions)에서는 항목마다
+  // 추가 조회가 필요해 생략한다. 어떤 프롬프트 템플릿 버전으로 생성됐는지 -
+  // 템플릿이 삭제됐거나(on delete set null) 이 컬럼이 생기기 전 리포트면 null.
+  promptVersion?: number | null;
 }
 
 // AI 분석 결과가 그대로 들어있는 컬럼이라 DB에서 읽어올 때도 zod로 한 번
@@ -36,6 +40,7 @@ interface ReportRow {
   provider: Provider;
   created_at: string;
   sentences: unknown;
+  prompt_template_id: string | null;
 }
 
 function rowToSession(row: ReportRow): HistorySession | null {
@@ -50,7 +55,7 @@ function rowToSession(row: ReportRow): HistorySession | null {
   };
 }
 
-const REPORT_COLUMNS = "id, direction, provider, created_at, sentences";
+const REPORT_COLUMNS = "id, direction, provider, created_at, sentences, prompt_template_id";
 
 export async function loadSessions(): Promise<HistorySession[]> {
   const supabase = createClient();
@@ -73,13 +78,23 @@ export async function getSession(id: string): Promise<HistorySession | null> {
     if (error) console.error("getSession failed", error);
     return null;
   }
-  return rowToSession(data);
+  const row = data as ReportRow;
+  const session = rowToSession(row);
+  if (!session || !row.prompt_template_id) return session;
+
+  const { data: template } = await supabase
+    .from("prompt_templates")
+    .select("version")
+    .eq("id", row.prompt_template_id)
+    .maybeSingle();
+  return { ...session, promptVersion: template?.version ?? null };
 }
 
 export async function addSession(
   provider: Provider,
   direction: Direction,
   sentences: SentenceResult[],
+  promptTemplateId: string | null,
 ): Promise<HistorySession | null> {
   const supabase = createClient();
   const {
@@ -89,7 +104,7 @@ export async function addSession(
 
   const { data, error } = await supabase
     .from("reports")
-    .insert({ user_id: user.id, provider, direction, sentences })
+    .insert({ user_id: user.id, provider, direction, sentences, prompt_template_id: promptTemplateId })
     .select(REPORT_COLUMNS)
     .single();
   if (error || !data) {

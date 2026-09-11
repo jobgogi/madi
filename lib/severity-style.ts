@@ -3,10 +3,9 @@ import type { NativeLanguage } from "@/lib/native-language";
 
 // 리포트 페이지가 severity 배지 스타일을 쓰는 곳마다 공유.
 export const SEVERITY_STYLE: Record<Severity, string> = {
-  critical: "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300",
-  warning:
-    "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300",
-  info: "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300",
+  critical: "bg-red-100 text-red-800",
+  warning: "bg-amber-100 text-amber-800",
+  info: "bg-zinc-100 text-zinc-700",
 };
 
 export const SEVERITY_LABEL: Record<NativeLanguage, Record<Severity, string>> = {

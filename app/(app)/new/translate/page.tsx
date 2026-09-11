@@ -14,6 +14,7 @@ import { useFlow } from "../flow-context";
 const AnalyzeApiResponseSchema = z.object({
   reports: z.array(TranslationAnalysisReportSchema),
   durationMs: z.number(),
+  promptTemplateId: z.string(),
 });
 
 function autoResize(el: HTMLTextAreaElement | null): void {
@@ -101,12 +102,13 @@ export default function TranslatePage() {
         return;
       }
 
-      const { reports, durationMs } = parsed.data;
+      const { reports, durationMs, promptTemplateId } = parsed.data;
       const perSentenceDuration = Math.round(durationMs / sentences.length);
       const session = await addSession(
         settings.provider,
         direction,
         sentences.map((s, i) => ({ ...s, report: reports[i], durationMs: perSentenceDuration })),
+        promptTemplateId,
       );
       if (!session) {
         setError(t.errorSaveFailed);

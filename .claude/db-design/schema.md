@@ -175,15 +175,20 @@ insert할지는 이번 설계에 포함하지 않았다. 테이블/RLS만 정의
 
 | 테이블 | select | insert/update | delete |
 |---|---|---|---|
-| `profiles` | 본인 행만 | 본인 행만 (트리거로 생성되지만, 트리거 도입 전 가입한 계정을 위해 `auth/callback`에서 upsert로 보충 — `20260908010000_profiles_insert_policy.sql`) | — |
-| `reports` | 본인 것만 | 본인 것만 | 본인 것만 |
+| `profiles` | 본인 행만 + **admin 전체** | 본인 행만 (트리거로 생성되지만, 트리거 도입 전 가입한 계정을 위해 `auth/callback`에서 upsert로 보충 — `20260908010000_profiles_insert_policy.sql`) + **admin은 전체 update(role 변경용)** | — |
+| `reports` | 본인 것만 + **admin 전체** | 본인 것만 | 본인 것만 |
 | `session_feedback` | 본인 것만 | 본인 것만 + `report_id`가 본인 리포트여야 함 | 본인 것만 |
-| `login_history` | 본인 것만 | 본인 것만 | — |
+| `login_history` | 본인 것만 + **admin 전체** | 본인 것만 | — |
 | `prompt_templates` | 인증 사용자 전체 | admin만 | admin만 |
 | `error_categories` | 전체(익명 포함) | admin만 | admin만 |
 
 관리자 판별은 재귀적 RLS 참조를 피하기 위해 `SECURITY DEFINER` 함수 `is_admin()`으로 분리
 (`schema.sql` 참고).
+
+**admin 전체 조회/수정 정책 추가** (`20260911000000_admin_read_write_policies.sql`,
+`.claude/requirements/admin-requirement.md` 참고) — 관리자 화면(사용자 관리, 사용 현황
+통계)을 위해 `profiles`/`reports`/`login_history`에 `is_admin()` 기반 정책을 permissive
+정책으로 추가. 기존 본인 전용 정책과 OR로 공존.
 
 ## 다음 단계 (이번 세션에서 하지 않음)
 
