@@ -202,9 +202,9 @@ export function PromptTemplatesClient() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-medium text-zinc-900">v{t.version}</span>
-                      {feedbackStats?.[t.id] && (
+                      {feedbackStats && (
                         <span className="text-xs text-zinc-400">
-                          👍 {feedbackStats[t.id].good} · 👎 {feedbackStats[t.id].bad}
+                          👍 {feedbackStats[t.id]?.good ?? 0} · 👎 {feedbackStats[t.id]?.bad ?? 0}
                         </span>
                       )}
                     </div>
