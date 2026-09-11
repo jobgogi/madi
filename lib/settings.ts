@@ -13,7 +13,7 @@ export interface Settings {
 
 const STORAGE_KEY = "madi:settings";
 
-function isProvider(value: unknown): value is Provider {
+export function isProvider(value: unknown): value is Provider {
   return value === "claude" || value === "openai" || value === "gemini";
 }
 
