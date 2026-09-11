@@ -2,56 +2,23 @@
 
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import type { Provider } from "@/lib/settings";
-import type { NativeLanguage } from "@/lib/native-language";
 import { useSettingsForm } from "@/lib/hooks/useSettingsForm";
 import { useTestConnection } from "@/lib/hooks/useTestConnection";
 import { useNativeLanguage } from "@/lib/hooks/useNativeLanguage";
+import { useUiLanguage } from "@/lib/hooks/useUiLanguage";
 import { useSignOut } from "@/lib/hooks/useSignOut";
-import { useLocale } from "@/lib/hooks/useLocale";
 import { settingsText } from "@/lib/i18n/settings";
-
-const NATIVE_LANGUAGE_OPTIONS: { value: NativeLanguage; label: string }[] = [
-  { value: "ko", label: "한국어" },
-  { value: "ja", label: "日本語" },
-];
-
-const PROVIDER_LABEL: Record<Provider, string> = {
-  claude: "Claude (Anthropic)",
-  openai: "ChatGPT (OpenAI)",
-  gemini: "Gemini (Google) - 무료 티어 있음",
-};
-
-const MODEL_PLACEHOLDER: Record<Provider, string> = {
-  claude: "claude-opus-5 (기본값)",
-  openai: "gpt-5 (최신 모델명은 직접 확인 후 입력 권장)",
-  gemini: "gemini-3.5-flash-lite (기본값)",
-};
-
-const API_KEY_LINK: Record<Provider, { href: string; label: string }> = {
-  claude: {
-    href: "https://platform.claude.com/settings/keys",
-    label: "platform.claude.com에서 발급",
-  },
-  openai: {
-    href: "https://platform.openai.com/api-keys",
-    label: "platform.openai.com에서 발급",
-  },
-  gemini: {
-    href: "https://aistudio.google.com/apikey",
-    label: "aistudio.google.com에서 무료로 발급",
-  },
-};
+import { GeminiApiKeyField } from "@/components/GeminiApiKeyField";
+import { LanguageToggle } from "@/components/LanguageToggle";
 
 export default function SettingsPage() {
   const router = useRouter();
-  const { provider, setProvider, apiKey, setApiKey, model, setModel, workspaceId, setWorkspaceId, save } =
-    useSettingsForm();
+  const { apiKey, setApiKey, model, setModel, save } = useSettingsForm();
   const { state: testState, test: testConnection } = useTestConnection();
   const { language, setLanguage } = useNativeLanguage();
+  const { uiLanguage, setUiLanguage } = useUiLanguage();
   const { signOut, loading: signingOut } = useSignOut();
-  const locale = useLocale();
-  const t = settingsText[locale];
+  const t = settingsText[uiLanguage];
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -61,10 +28,9 @@ export default function SettingsPage() {
 
   function handleTestConnection() {
     void testConnection({
-      provider,
+      provider: "gemini",
       apiKey: apiKey.trim(),
       model: model.trim() || undefined,
-      workspaceId: provider === "claude" ? workspaceId.trim() || undefined : undefined,
     });
   }
 
@@ -86,24 +52,14 @@ export default function SettingsPage() {
         <form onSubmit={handleSubmit} className="flex flex-col gap-5">
           <div className="flex flex-col gap-1.5">
             <span className="text-sm font-medium text-zinc-700">{t.languageLabel}</span>
-            <div className="flex gap-2" role="group" aria-label={t.languageGroupAriaLabel}>
-              {NATIVE_LANGUAGE_OPTIONS.map((opt) => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => void setLanguage(opt.value)}
-                  aria-pressed={language === opt.value}
-                  className={`rounded-full border px-4 py-1.5 text-sm font-medium transition-colors ${
-                    language === opt.value
-                      ? "border-zinc-900 bg-zinc-900 text-white"
-                      : "border-zinc-300 text-zinc-700 hover:bg-zinc-100"
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
+            <LanguageToggle value={language ?? "ko"} onChange={(v) => void setLanguage(v)} ariaLabel={t.languageGroupAriaLabel} />
             <p className="text-xs text-zinc-500">{t.languageHint}</p>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <span className="text-sm font-medium text-zinc-700">{t.uiLanguageLabel}</span>
+            <LanguageToggle value={uiLanguage} onChange={setUiLanguage} ariaLabel={t.uiLanguageGroupAriaLabel} />
+            <p className="text-xs text-zinc-500">{t.uiLanguageHint}</p>
           </div>
 
           <hr className="border-zinc-200" />
@@ -113,73 +69,7 @@ export default function SettingsPage() {
             <p className="text-sm text-zinc-500">{t.apiKeyIntro}</p>
           </div>
 
-          <label className="flex flex-col gap-1.5">
-            <span className="text-sm font-medium text-zinc-700">
-              {t.providerLabel}
-            </span>
-            <select
-              value={provider}
-              onChange={(e) => setProvider(e.target.value as Provider)}
-              aria-label={t.providerAriaLabel}
-              className="rounded-lg border border-zinc-300 bg-white p-3 text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-400"
-            >
-              {(Object.keys(PROVIDER_LABEL) as Provider[]).map((p) => (
-                <option key={p} value={p}>
-                  {PROVIDER_LABEL[p]}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label className="flex flex-col gap-1.5">
-            <span className="text-sm font-medium text-zinc-700">
-              {t.apiKeyLabel}
-            </span>
-            <input
-              type="password"
-              value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
-              required
-              autoComplete="off"
-              className="rounded-lg border border-zinc-300 bg-white p-3 text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-400"
-              placeholder={t.apiKeyPlaceholder}
-            />
-            <a
-              href={API_KEY_LINK[provider].href}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs text-zinc-600 hover:text-zinc-900 hover:underline"
-            >
-              {API_KEY_LINK[provider].label}
-            </a>
-          </label>
-
-          {provider === "claude" && (
-            <label className="flex flex-col gap-1.5">
-              <span className="text-sm font-medium text-zinc-700">
-                {t.workspaceIdLabel}
-              </span>
-              <input
-                type="text"
-                value={workspaceId}
-                onChange={(e) => setWorkspaceId(e.target.value)}
-                className="rounded-lg border border-zinc-300 bg-white p-3 text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-400"
-                placeholder={t.workspaceIdPlaceholder}
-              />
-              <p className="text-xs text-zinc-500">
-                {t.workspaceIdHintBefore}{" "}
-                <a
-                  href="https://platform.claude.com/settings/workspaces"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="underline"
-                >
-                  platform.claude.com/settings/workspaces
-                </a>
-                {t.workspaceIdHintAfter}
-              </p>
-            </label>
-          )}
+          <GeminiApiKeyField apiKey={apiKey} setApiKey={setApiKey} locale={uiLanguage} />
 
           <label className="flex flex-col gap-1.5">
             <span className="text-sm font-medium text-zinc-700">
@@ -190,7 +80,7 @@ export default function SettingsPage() {
               value={model}
               onChange={(e) => setModel(e.target.value)}
               className="rounded-lg border border-zinc-300 bg-white p-3 text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-400"
-              placeholder={MODEL_PLACEHOLDER[provider]}
+              placeholder={t.modelPlaceholder}
             />
           </label>
 

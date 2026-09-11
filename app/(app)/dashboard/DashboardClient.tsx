@@ -7,6 +7,7 @@ import { CATEGORY_LABEL, monthLabels, type ActivityDay } from "@/lib/dashboard-s
 import { DIRECTION_FILTER_OPTIONS, useDashboardData, type DirectionFilter } from "@/lib/hooks/useDashboardData";
 import { useLocale } from "@/lib/hooks/useLocale";
 import { useNativeLanguage } from "@/lib/hooks/useNativeLanguage";
+import { useHasApiKey } from "@/lib/hooks/useHasApiKey";
 import { dashboardText } from "@/lib/i18n/dashboard";
 import { SessionCard } from "@/components/SessionCard";
 
@@ -23,12 +24,19 @@ export function DashboardClient() {
   const [direction, setDirection] = useState<DirectionFilter>("all");
   const data = useDashboardData(direction);
   const { language, loaded } = useNativeLanguage();
+  const hasApiKey = useHasApiKey();
   const locale = useLocale();
   const t = dashboardText[locale];
 
   useEffect(() => {
-    if (loaded && language === null) router.replace("/onboarding/language");
-  }, [loaded, language, router]);
+    if (loaded && language === null) {
+      router.replace("/onboarding/language");
+      return;
+    }
+    if (loaded && language !== null && hasApiKey === false) {
+      router.replace("/onboarding/api-key");
+    }
+  }, [loaded, language, hasApiKey, router]);
 
   if (!data) {
     return (

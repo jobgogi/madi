@@ -46,7 +46,7 @@ export const landing: Record<NativeLanguage, LandingText> = {
       },
       {
         title: "내 API 키로, 내 방식대로",
-        body: "OpenAI · Claude · Gemini 중 원하는 AI를 선택하세요. API 키는 서버를 거치지 않고 이 브라우저에만 저장됩니다.",
+        body: "Gemini API 키로 바로 시작하세요 (OpenAI · Claude는 지원 예정). API 키는 서버를 거치지 않고 이 브라우저에만 저장됩니다.",
       },
     ],
     finalCta: "지금 바로 한 문장부터 시작해보세요",
@@ -79,7 +79,7 @@ export const landing: Record<NativeLanguage, LandingText> = {
       },
       {
         title: "自分のAPIキーで、自分のやり方で",
-        body: "OpenAI・Claude・Geminiの中から好きなAIを選べます。APIキーはサーバーを経由せず、このブラウザにのみ保存されます。",
+        body: "Gemini APIキーですぐに始められます（OpenAI・Claudeは対応予定）。APIキーはサーバーを経由せず、このブラウザにのみ保存されます。",
       },
     ],
     finalCta: "今すぐ一文から始めてみましょう",
