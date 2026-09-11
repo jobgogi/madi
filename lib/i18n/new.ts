@@ -25,6 +25,7 @@ export const newFlow: Record<
     translationAria: (paragraphIndex: number, sentenceIndex: number) => string;
     translationPlaceholder: string;
     errorNoApiKey: string;
+    errorNoNativeLanguage: string;
     errorAnalyzeFailed: string;
     errorParseFailed: string;
     errorSaveFailed: string;
@@ -59,6 +60,7 @@ export const newFlow: Record<
       `${paragraphIndex}번째 단락 ${sentenceIndex}번째 문장 번역`,
     translationPlaceholder: "번역을 입력하세요",
     errorNoApiKey: "설정 화면에서 API 키를 먼저 입력해주세요.",
+    errorNoNativeLanguage: "모국어가 설정되지 않았습니다. 온보딩을 다시 진행해주세요.",
     errorAnalyzeFailed: "분석 중 오류가 발생했습니다.",
     errorParseFailed: "분석 결과를 처리하지 못했습니다.",
     errorSaveFailed: "기록 저장에 실패했습니다. 로그인 상태를 확인해주세요.",
@@ -92,6 +94,7 @@ export const newFlow: Record<
       `${paragraphIndex}番目の段落 ${sentenceIndex}番目の文の翻訳`,
     translationPlaceholder: "翻訳を入力してください",
     errorNoApiKey: "設定画面でAPIキーを先に入力してください。",
+    errorNoNativeLanguage: "母国語が設定されていません。オンボーディングをやり直してください。",
     errorAnalyzeFailed: "分析中にエラーが発生しました。",
     errorParseFailed: "分析結果を処理できませんでした。",
     errorSaveFailed: "記録の保存に失敗しました。ログイン状態を確認してください。",

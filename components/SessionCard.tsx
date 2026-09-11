@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { sessionHeadline, type HistorySession } from "@/lib/history";
-import { JLPT_STYLE } from "@/lib/jlpt-style";
+import { LEVEL_STYLE } from "@/lib/level-style";
 import { useLocale } from "@/lib/hooks/useLocale";
 import { history } from "@/lib/i18n/history";
 import type { NativeLanguage } from "@/lib/native-language";
@@ -10,6 +10,8 @@ const PROVIDER_LABEL: Record<HistorySession["provider"], string> = {
   openai: "ChatGPT",
   gemini: "Gemini",
 };
+
+const NATIVE_LANGUAGE_LABEL: Record<NativeLanguage, string> = { ko: "한국어", ja: "日本語" };
 
 function formatDate(ts: number, locale: NativeLanguage): string {
   return new Date(ts).toLocaleString(locale === "ja" ? "ja-JP" : "ko-KR", {
@@ -48,7 +50,7 @@ export function SessionCard({
         className="flex min-w-0 flex-1 items-center gap-2 hover:underline"
       >
         <span
-          className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${JLPT_STYLE[level]}`}
+          className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${LEVEL_STYLE[level]}`}
         >
           {level}
         </span>
@@ -72,6 +74,9 @@ export function SessionCard({
         )}
         <span className="hidden shrink-0 rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-600 sm:inline">
           {PROVIDER_LABEL[session.provider]}
+        </span>
+        <span className="hidden shrink-0 rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-600 sm:inline">
+          {session.nativeLanguage ? NATIVE_LANGUAGE_LABEL[session.nativeLanguage] : "-"}
         </span>
         <span className="hidden shrink-0 text-xs text-zinc-400 sm:inline">
           {formatDate(session.createdAt, locale)}

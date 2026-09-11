@@ -7,6 +7,7 @@ import { z } from "zod/v4";
 import { TranslationAnalysisReportSchema } from "@/lib/analysis-schema";
 import { addSession } from "@/lib/history";
 import { useLocale } from "@/lib/hooks/useLocale";
+import { useNativeLanguage } from "@/lib/hooks/useNativeLanguage";
 import { newFlow } from "@/lib/i18n/new";
 import { loadSettings } from "@/lib/settings";
 import { useFlow } from "../flow-context";
@@ -26,8 +27,9 @@ function autoResize(el: HTMLTextAreaElement | null): void {
 export default function TranslatePage() {
   const router = useRouter();
   const { paragraphs, groups, setGroups, direction } = useFlow();
-  const nativeLanguage = useLocale();
-  const t = newFlow[nativeLanguage];
+  const locale = useLocale();
+  const { language: nativeLanguage } = useNativeLanguage();
+  const t = newFlow[locale];
   const [analyzing, setAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -62,6 +64,10 @@ export default function TranslatePage() {
     const settings = loadSettings();
     if (!settings) {
       setError(t.errorNoApiKey);
+      return;
+    }
+    if (!nativeLanguage) {
+      setError(t.errorNoNativeLanguage);
       return;
     }
 
@@ -107,6 +113,7 @@ export default function TranslatePage() {
       const session = await addSession(
         settings.provider,
         direction,
+        nativeLanguage,
         sentences.map((s, i) => ({ ...s, report: reports[i], durationMs: perSentenceDuration })),
         promptTemplateId,
       );

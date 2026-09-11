@@ -11,6 +11,7 @@ function makeSession(
     createdAt,
     provider: "claude",
     direction,
+    nativeLanguage: null,
     sentences: [
       {
         sourceText: "s",

@@ -165,6 +165,19 @@ export function PromptTemplatesClient() {
             </label>
           ))}
         </div>
+        <div className="rounded-md border border-dashed border-zinc-300 bg-white p-2 text-xs text-zinc-500">
+          <p className="font-medium text-zinc-600">아래 플레이스홀더는 요청 시점에 자동 치환됩니다 - 본문에 그대로 넣어 사용하세요.</p>
+          <ul className="mt-1 list-disc space-y-1 pl-4">
+            <li>
+              <code className="rounded bg-zinc-100 px-1">{"{{explanationLang}}"}</code> — 사용자 모국어 이름(한국어/일본어)으로
+              치환. comment/meaning 등 설명 텍스트를 어느 언어로 쓸지 지시할 때 사용.
+            </li>
+            <li>
+              <code className="rounded bg-zinc-100 px-1">{"{{readingGuidance}}"}</code> — 모국어에 따라 vocabulary_diff[].reading
+              지시문(가타카나/후리가나 등)으로 치환. word 항목 안내 근처에 배치.
+            </li>
+          </ul>
+        </div>
         <textarea
           value={content}
           onChange={(e) => setContent(e.target.value)}

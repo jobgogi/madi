@@ -1,6 +1,7 @@
 import { z } from "zod/v4";
 import { TranslationAnalysisReportSchema, type Direction } from "@/lib/analysis-schema";
 import type { Provider } from "@/lib/settings";
+import type { NativeLanguage } from "@/lib/native-language";
 import { createClient } from "@/lib/supabase/client";
 
 export interface SentenceResult {
@@ -15,6 +16,9 @@ export interface HistorySession {
   createdAt: number;
   provider: Provider;
   direction: Direction;
+  // 분석 당시 사용자의 모국어(설명 텍스트가 쓰인 언어) - direction과 독립적이라
+  // 따로 저장한다. 이 컬럼이 생기기 전 리포트는 null.
+  nativeLanguage: NativeLanguage | null;
   sentences: SentenceResult[];
   // 리포트 상세 화면(getSession)에서만 채워짐 - 목록(loadSessions)에서는 항목마다
   // 추가 조회가 필요해 생략한다. 어떤 프롬프트 템플릿 버전으로 생성됐는지 -
@@ -38,6 +42,7 @@ interface ReportRow {
   id: string;
   direction: Direction;
   provider: Provider;
+  native_language: NativeLanguage | null;
   created_at: string;
   sentences: unknown;
   prompt_template_id: string | null;
@@ -51,11 +56,12 @@ function rowToSession(row: ReportRow): HistorySession | null {
     createdAt: new Date(row.created_at).getTime(),
     provider: row.provider,
     direction: row.direction,
+    nativeLanguage: row.native_language,
     sentences: parsed.data,
   };
 }
 
-const REPORT_COLUMNS = "id, direction, provider, created_at, sentences, prompt_template_id";
+const REPORT_COLUMNS = "id, direction, provider, native_language, created_at, sentences, prompt_template_id";
 
 export async function loadSessions(): Promise<HistorySession[]> {
   const supabase = createClient();
@@ -93,6 +99,7 @@ export async function getSession(id: string): Promise<HistorySession | null> {
 export async function addSession(
   provider: Provider,
   direction: Direction,
+  nativeLanguage: NativeLanguage,
   sentences: SentenceResult[],
   promptTemplateId: string | null,
 ): Promise<HistorySession | null> {
@@ -104,7 +111,14 @@ export async function addSession(
 
   const { data, error } = await supabase
     .from("reports")
-    .insert({ user_id: user.id, provider, direction, sentences, prompt_template_id: promptTemplateId })
+    .insert({
+      user_id: user.id,
+      provider,
+      direction,
+      native_language: nativeLanguage,
+      sentences,
+      prompt_template_id: promptTemplateId,
+    })
     .select(REPORT_COLUMNS)
     .single();
   if (error || !data) {

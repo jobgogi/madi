@@ -17,4 +17,12 @@ describe("resolvePromptTemplate", () => {
     expect(result).toContain("조사_오용");
     expect(result).toContain("정의된 JSON 스키마 형식으로만 응답");
   });
+
+  it("{{readingGuidance}}는 모국어가 일본어면 가타카나 안내로 치환된다", () => {
+    expect(resolvePromptTemplate("규칙: {{readingGuidance}}", "ja")).toContain("가타카나");
+  });
+
+  it("{{readingGuidance}}는 모국어가 한국어면 후리가나 안내로 치환된다", () => {
+    expect(resolvePromptTemplate("규칙: {{readingGuidance}}", "ko")).toContain("한자 요미가나");
+  });
 });

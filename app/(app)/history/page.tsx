@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { JLPT_LEVELS, type JlptLevel } from "@/lib/analysis-schema";
+import { DIFFICULTY_LEVELS, type DifficultyLevel } from "@/lib/analysis-schema";
 import { clearHistory, deleteSession, sessionHeadline, type HistorySession } from "@/lib/history";
-import { JLPT_STYLE } from "@/lib/jlpt-style";
+import { LEVEL_STYLE } from "@/lib/level-style";
 import { CATEGORY_LABEL, filterSessionsByCategory } from "@/lib/dashboard-stats";
 import { useSessions } from "@/lib/hooks/useSessions";
 import { useCategoryFilterFromQuery } from "@/lib/hooks/useCategoryFilterFromQuery";
@@ -36,18 +36,15 @@ export default function HistoryPage() {
   // 난이도를 대표값으로 근사한다. headline은 여기서 한 번만 계산해서
   // SessionCard에 넘기고, 카드 안에서 다시 계산하지 않게 한다.
   type Entry = { session: HistorySession; headline: ReturnType<typeof sessionHeadline> };
-  const grouped: Record<JlptLevel, Entry[]> = {
-    N5: [],
-    N4: [],
-    N3: [],
-    N2: [],
-    N1: [],
-  };
+  const grouped = Object.fromEntries(DIFFICULTY_LEVELS.map((level) => [level, [] as Entry[]])) as Record<
+    DifficultyLevel,
+    Entry[]
+  >;
   for (const session of visibleSessions ?? []) {
     const headline = sessionHeadline(session);
     grouped[headline.level].push({ session, headline });
   }
-  for (const level of JLPT_LEVELS) {
+  for (const level of DIFFICULTY_LEVELS) {
     grouped[level].sort((a, b) => b.session.createdAt - a.session.createdAt);
   }
 
@@ -105,12 +102,12 @@ export default function HistoryPage() {
           </p>
         )}
 
-        {JLPT_LEVELS.map((level) =>
+        {DIFFICULTY_LEVELS.map((level) =>
           grouped[level].length > 0 ? (
             <section key={level}>
               <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold text-zinc-900">
                 <span
-                  className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${JLPT_STYLE[level]}`}
+                  className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${LEVEL_STYLE[level]}`}
                 >
                   {level}
                 </span>

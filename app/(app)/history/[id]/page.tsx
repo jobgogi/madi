@@ -4,7 +4,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import type { GrammarPoint, VocabularyItem } from "@/lib/analysis-schema";
 import { deleteSession, type HistorySession } from "@/lib/history";
-import { JLPT_STYLE } from "@/lib/jlpt-style";
+import { LEVEL_STYLE } from "@/lib/level-style";
 import { SEVERITY_LABEL, SEVERITY_ORDER, SEVERITY_STYLE } from "@/lib/severity-style";
 import { aggregateSeverityCounts, compareSessions } from "@/lib/session-summary";
 import { useHistorySession } from "@/lib/hooks/useHistorySession";
@@ -29,6 +29,8 @@ const PROVIDER_LABEL: Record<HistorySession["provider"], string> = {
   gemini: "Gemini",
 };
 
+const NATIVE_LANGUAGE_LABEL: Record<NativeLanguage, string> = { ko: "한국어", ja: "日本語" };
+
 function formatDate(ts: number, locale: NativeLanguage): string {
   return new Date(ts).toLocaleString(locale === "ja" ? "ja-JP" : "ko-KR", {
     year: "numeric",
@@ -44,7 +46,7 @@ function VocabularyRow({ item }: { item: VocabularyItem }) {
     <li className="flex items-start gap-3 rounded-lg border border-zinc-200 p-3">
       {item.level && (
         <span
-          className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${JLPT_STYLE[item.level]}`}
+          className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${LEVEL_STYLE[item.level]}`}
         >
           {item.level}
         </span>
@@ -178,6 +180,9 @@ export default function SessionReportPage() {
               </span>
               <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-zinc-600">
                 {PROVIDER_LABEL[session.provider]}
+              </span>
+              <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-zinc-600">
+                {session.nativeLanguage ? NATIVE_LANGUAGE_LABEL[session.nativeLanguage] : "-"}
               </span>
               {typeof session.promptVersion === "number" && (
                 <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-zinc-600">

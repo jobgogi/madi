@@ -23,9 +23,21 @@ export const POINT_CATEGORIES = [
 export const SEVERITIES = ["critical", "warning", "info"] as const;
 export type Severity = (typeof SEVERITIES)[number];
 
-// JLPT(일본어능력시험) 등급. N5가 가장 쉽고 N1이 가장 어려움.
+// JLPT(일본어능력시험) 등급. N5가 가장 쉽고 N1이 가장 어려움. 원문이 일본어인
+// 방향(ja_to_ko)에 쓰인다.
 export const JLPT_LEVELS = ["N5", "N4", "N3", "N2", "N1"] as const;
 export type JlptLevel = (typeof JLPT_LEVELS)[number];
+
+// TOPIK(한국어능력시험) 등급. 1급이 가장 쉽고 6급이 가장 어려움. 원문이
+// 한국어인 방향(ko_to_ja)에 쓰인다.
+export const TOPIK_LEVELS = ["1급", "2급", "3급", "4급", "5급", "6급"] as const;
+export type TopikLevel = (typeof TOPIK_LEVELS)[number];
+
+// 난이도 등급 - 어느 스케일(JLPT/TOPIK)을 쓸지는 direction(원문 언어)에 따라
+// 프롬프트 템플릿이 정한다. 스키마는 둘 다 허용하고 실제 어떤 값이 오는지는
+// 프롬프트가 보장.
+export const DIFFICULTY_LEVELS = [...JLPT_LEVELS, ...TOPIK_LEVELS] as const;
+export type DifficultyLevel = (typeof DIFFICULTY_LEVELS)[number];
 
 // 번역 방향. ja_to_ko: 일본어 원문 -> 한국어 번역 (기본). ko_to_ja: 한국어 원문 -> 일본어 번역.
 export const DIRECTIONS = ["ja_to_ko", "ko_to_ja"] as const;
@@ -68,9 +80,9 @@ export const VocabularyItemSchema = z
       .describe("word의 읽는 법(예: 한자 요미가나, 또는 다른 언어의 발음 표기). 필요 없으면 null"),
     meaning: z.string().describe("이 단어의 뜻 (사용자 모국어로 설명)"),
     level: z
-      .enum(JLPT_LEVELS)
+      .enum(DIFFICULTY_LEVELS)
       .nullable()
-      .describe("이 단어의 대략적인 JLPT 난이도. 확신이 없으면 null"),
+      .describe("이 단어의 대략적인 난이도(원문이 일본어면 JLPT, 한국어면 TOPIK 기준). 확신이 없으면 null"),
   })
   .strict();
 
@@ -81,8 +93,10 @@ export const TranslationAnalysisReportSchema = z
     difficulty: z
       .object({
         level: z
-          .enum(JLPT_LEVELS)
-          .describe("원문 전체의 대략적인 난이도 (JLPT 기준, N5=쉬움 ~ N1=어려움)"),
+          .enum(DIFFICULTY_LEVELS)
+          .describe(
+            "원문 전체의 대략적인 난이도. 원문이 일본어면 JLPT 기준(N5=쉬움~N1=어려움), 한국어면 TOPIK 기준(1급=쉬움~6급=어려움)",
+          ),
         comment: z.string().describe("왜 그 난이도로 판단했는지 짧은 설명"),
       })
       .strict(),

@@ -74,15 +74,35 @@ export class AnalysisParseError extends Error {
   }
 }
 
+// vocabulary_diff[].reading 안내 - 사용자 모국어에 따라 어느 표기(가타카나/
+// 후리가나)로 읽는 법을 병기할지 정한다. direction을 수동으로 뒤집어 원문
+// 언어가 자기 모국어와 같아지는 경우(예: 모국어 한국어인 사용자가 ko_to_ja
+// 선택)는 흔치 않은 사용 패턴으로 보고 단순화를 위해 다루지 않는다 - 항상
+// 모국어 기준으로만 판단.
+function buildReadingGuidance(nativeLanguage: NativeLanguage): string {
+  if (nativeLanguage === "ja") {
+    return "각 단어에는 reading을 병기하세요. 한자어라도 대응하는 일본어 한자어의 음독으로 바꾸지 말고, 한글 그대로의 한국어 발음을 가타카나로 최대한 가깝게 표기하세요(사용자가 한글 읽는 법 자체를 익히는 것이 목적입니다). 필요 없으면 null로 두세요.";
+  }
+  return "각 단어에는 reading(한자 요미가나, 히라가나 표기)을 병기하세요. 필요 없으면 null로 두세요.";
+}
+
 // 시스템 프롬프트 본문(편집 가능 부분)은 prompt_templates DB 테이블(방향별 활성
-// 버전)이 유일 소스. 방향에 따라 달라지는 표현(언어명, reading 규칙 등)은 이미
-// 방향별 행에 고정 텍스트로 들어있고, 사용자 모국어에 따라서만 달라지는 부분만
-// {{explanationLang}} 플레이스홀더로 남겨뒀으므로 요청 시점에 치환한다. 그 뒤에
-// LOCKED_PROMPT_RULES를 항상 덧붙여서 관리자 입력 내용과 무관하게 구조적 제약이
-// 보장되게 한다. 관리자 화면(app/admin/prompt-templates)과 API 라우트
-// (app/api/analyze, app/api/admin/prompt-preview) 양쪽에서 호출.
+// 버전)이 유일 소스. 방향에 따라서만 달라지는 고정 표현(언어명 등)은 이미
+// 방향별 행에 고정 텍스트로 들어있다. 사용자 모국어에 따라 달라지는 부분은
+// {{explanationLang}}과 {{readingGuidance}} 플레이스홀더로 남겨뒀으므로 요청
+// 시점에 치환한다. 그 뒤에 LOCKED_PROMPT_RULES를 항상 덧붙여서 관리자 입력
+// 내용과 무관하게 구조적 제약이 보장되게 한다. 관리자 화면
+// (app/admin/prompt-templates)과 API 라우트(app/api/analyze,
+// app/api/admin/prompt-preview) 양쪽에서 호출.
 export function resolvePromptTemplate(content: string, nativeLanguage: NativeLanguage): string {
-  const resolved = content.split("{{explanationLang}}").join(EXPLANATION_LANG_NAME[nativeLanguage]);
+
+  console.log(nativeLanguage);
+
+  const resolved = content
+    .split("{{explanationLang}}")
+    .join(EXPLANATION_LANG_NAME[nativeLanguage])
+    .split("{{readingGuidance}}")
+    .join(buildReadingGuidance(nativeLanguage));
   return `${resolved}\n\n${LOCKED_PROMPT_RULES}`;
 }
 
@@ -224,6 +244,8 @@ async function runGeminiAnalysis(
   params: RunAnalysisParams,
 ): Promise<TranslationAnalysisReport[]> {
   const client = new GoogleGenAI({ apiKey: params.apiKey });
+
+  console.log(params, params.systemPromptTemplate, params.nativeLanguage);
 
   const response = await withGeminiRetry(() =>
     client.models.generateContent({
