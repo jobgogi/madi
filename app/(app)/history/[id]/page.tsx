@@ -179,6 +179,11 @@ export default function SessionReportPage() {
               <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-zinc-600">
                 {PROVIDER_LABEL[session.provider]}
               </span>
+              {typeof session.promptVersion === "number" && (
+                <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-zinc-600">
+                  prompt v{session.promptVersion}
+                </span>
+              )}
               <span className="text-zinc-400">
                 {formatDate(session.createdAt, locale)}
               </span>
