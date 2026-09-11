@@ -114,6 +114,81 @@ function PromptTestPanel({ direction, content }: { direction: Direction; content
   );
 }
 
+interface ResolveResult {
+  resolved: string;
+  unresolvedPlaceholders: string[];
+}
+
+// 저장/활성화 전에 {{explanationLang}} 등 플레이스홀더가 실제로 치환되는지
+// LLM 호출 없이 눈으로 확인하는 패널. app/api/admin/prompt-resolve를
+// 모국어(ko/ja) 두 값으로 각각 호출한다. 문자열 정확 일치에 의존하는
+// DB replace() 마이그레이션이 조용히 실패했던 사고(2026-09-11)의 재발을
+// 막기 위해 추가 - resolved 안에 "{{...}}"가 남아있으면 경고를 보여준다.
+function ResolvedPromptPreview({ content }: { content: string }) {
+  const [results, setResults] = useState<Record<"ko" | "ja", ResolveResult> | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleResolve(): Promise<void> {
+    if (!content.trim()) {
+      setError("프롬프트 내용이 없습니다.");
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      const [ko, ja] = await Promise.all(
+        (["ko", "ja"] as const).map(async (nativeLanguage) => {
+          const res = await fetch("/api/admin/prompt-resolve", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ content, nativeLanguage }),
+          });
+          const data: unknown = await res.json();
+          if (!res.ok) throw new Error((data as { error?: string }).error ?? "치환 결과를 가져오지 못했습니다.");
+          return data as ResolveResult;
+        }),
+      );
+      setResults({ ko, ja });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "치환 결과를 가져오지 못했습니다.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-2">
+      <button
+        type="button"
+        onClick={() => void handleResolve()}
+        disabled={loading}
+        className="self-start rounded-full border border-zinc-400 px-3 py-1 text-xs font-medium text-zinc-700 transition-colors hover:bg-zinc-100 disabled:opacity-50"
+      >
+        {loading ? "확인 중..." : "치환 결과 미리보기 (모국어 한국어/일본어 각각)"}
+      </button>
+      {error && <p className="text-xs text-red-600">{error}</p>}
+      {results &&
+        (["ko", "ja"] as const).map((lang) => {
+          const r = results[lang];
+          return (
+            <details key={lang} className="rounded-md border border-zinc-200 bg-white p-2 text-xs">
+              <summary className="cursor-pointer font-medium text-zinc-700">
+                모국어={lang === "ko" ? "한국어" : "일본어"} 치환 결과
+                {r.unresolvedPlaceholders.length > 0 && (
+                  <span className="ml-2 rounded-full bg-red-100 px-2 py-0.5 text-red-700">
+                    ⚠ 치환 안 된 플레이스홀더: {r.unresolvedPlaceholders.join(", ")}
+                  </span>
+                )}
+              </summary>
+              <pre className="mt-2 max-h-64 overflow-y-auto whitespace-pre-wrap text-zinc-600">{r.resolved}</pre>
+            </details>
+          );
+        })}
+    </div>
+  );
+}
+
 export function PromptTemplatesClient() {
   const { templates, create, activate } = usePromptTemplates();
   const feedbackStats = usePromptFeedbackStats();
@@ -173,6 +248,14 @@ export function PromptTemplatesClient() {
               치환. comment/meaning 등 설명 텍스트를 어느 언어로 쓸지 지시할 때 사용.
             </li>
             <li>
+              <code className="rounded bg-zinc-100 px-1">{"{{vocabularyLanguage}}"}</code> — vocabulary_diff[].word가 어느
+              언어여야 하는지(모국어의 반대쪽 언어) 지시문으로 치환. direction이 아니라 모국어 기준.
+            </li>
+            <li>
+              <code className="rounded bg-zinc-100 px-1">{"{{difficultyGuidance}}"}</code> — difficulty.level 판정 대상과
+              척도(일본어=JLPT, 한국어=TOPIK) 지시문으로 치환. 역시 모국어 기준.
+            </li>
+            <li>
               <code className="rounded bg-zinc-100 px-1">{"{{readingGuidance}}"}</code> — 모국어에 따라 vocabulary_diff[].reading
               지시문(가타카나/후리가나 등)으로 치환. word 항목 안내 근처에 배치.
             </li>
@@ -192,6 +275,7 @@ export function PromptTemplatesClient() {
           </summary>
           <pre className="mt-2 whitespace-pre-wrap">{LOCKED_PROMPT_RULES}</pre>
         </details>
+        <ResolvedPromptPreview content={content} />
         <button
           type="submit"
           disabled={saving || !content.trim()}
@@ -235,6 +319,7 @@ export function PromptTemplatesClient() {
                     )}
                   </div>
                   <pre className="whitespace-pre-wrap text-xs text-zinc-600">{t.content}</pre>
+                  <ResolvedPromptPreview content={t.content} />
                 </li>
               ))}
             </ul>

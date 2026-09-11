@@ -25,4 +25,14 @@ describe("resolvePromptTemplate", () => {
   it("{{readingGuidance}}는 모국어가 한국어면 후리가나 안내로 치환된다", () => {
     expect(resolvePromptTemplate("규칙: {{readingGuidance}}", "ko")).toContain("한자 요미가나");
   });
+
+  it("{{vocabularyLanguage}}는 모국어의 반대쪽 언어를 word 언어로 지정한다", () => {
+    expect(resolvePromptTemplate("{{vocabularyLanguage}}", "ko")).toContain("word는 반드시 일본어 표현");
+    expect(resolvePromptTemplate("{{vocabularyLanguage}}", "ja")).toContain("word는 반드시 한국어 표현");
+  });
+
+  it("{{difficultyGuidance}}는 모국어의 반대쪽 언어 기준으로 JLPT/TOPIK 척도를 정한다", () => {
+    expect(resolvePromptTemplate("{{difficultyGuidance}}", "ko")).toContain("JLPT");
+    expect(resolvePromptTemplate("{{difficultyGuidance}}", "ja")).toContain("TOPIK");
+  });
 });
